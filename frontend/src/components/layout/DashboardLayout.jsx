@@ -6,8 +6,7 @@ const navPaciente = [
   { path: '/paciente',           label: 'Início',           icon: GridIcon },
   { path: '/paciente/consultas', label: 'Minhas consultas', icon: CalIcon },
   { path: '/paciente/agendar',   label: 'Agendar consulta', icon: PlusIcon },
-  { path: '/paciente/historico', label: 'Histórico',        icon: ClockIcon },
-  { path: '/paciente/noticias', label: 'Notícias', icon: NewsIcon }
+  { path: '/paciente/historico', label: 'Histórico',        icon: ClockIcon }
 ]
 
 const navProfissional = [
@@ -18,8 +17,7 @@ const navProfissional = [
   { path: '/profissional/financeiro',   label: 'Financeiro',     icon: CardIcon },
   { path: '/profissional/codigo-etica', label: 'Código de Ética', icon: BookIcon },
   { path: '/profissional/dsm5', label: 'DSM-5', icon: BrainIcon },
-  { path: '/profissional/documentos-cfp', label: 'Documentos CFP', icon: FileIcon },
-  { path: '/profissional/noticias', label: 'Notícias', icon: NewsIcon }
+  { path: '/profissional/documentos-cfp', label: 'Documentos CFP', icon: FileIcon }
 ]
 
 export default function DashboardLayout({ children, titulo }) {
@@ -193,14 +191,6 @@ function FileIcon({ className }) {
     <svg className={className} viewBox="0 0 16 16" fill="none">
       <path d="M9 1H4a1 1 0 00-1 1v12a1 1 0 001 1h8a1 1 0 001-1V5L9 1z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M9 1v4h4M5 8h6M5 11h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-    </svg>
-  )
-}
-function NewsIcon({ className }) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" fill="none">
-      <rect x="1" y="2" width="14" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
-      <path d="M4 6h8M4 9h5M4 12h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
     </svg>
   )
 }
