@@ -11,6 +11,9 @@ const STATUS_LABEL = {
   REMARCADO:  { label: 'Remarcada',  cls: 'bg-gray-100 text-gray-500' },
 }
 
+// Consulta pendente/confirmada cujo horário já passou, sem registro do profissional
+const AGUARDANDO_REGISTRO = { label: 'Aguardando registro', cls: 'bg-amber-50 text-amber-700' }
+
 const TIPO_LABEL = {
   AVALIACAO_INICIAL: 'Avaliação inicial',
   ACOMPANHAMENTO:    'Acompanhamento',
@@ -22,9 +25,12 @@ export default function ConsultasPage() {
   const { data: agendamentos = [], isLoading } = useAgendamentos()
   const { mutateAsync: cancelar, isPending: cancelando } = useCancelarAgendamento()
 
-  const proximas  = agendamentos.filter(a => ['PENDENTE', 'CONFIRMADO'].includes(a.status))
+  const agora     = new Date()
+  const ativa     = a => ['PENDENTE', 'CONFIRMADO'].includes(a.status)
+  const proximas  = agendamentos.filter(a => ativa(a) && new Date(a.dataHora) >= agora)
     .sort((a, b) => new Date(a.dataHora) - new Date(b.dataHora))
-  const passadas  = agendamentos.filter(a => ['REALIZADO', 'CANCELADO', 'REMARCADO'].includes(a.status))
+  const passadas  = agendamentos.filter(a =>
+      ['REALIZADO', 'CANCELADO', 'REMARCADO'].includes(a.status) || (ativa(a) && new Date(a.dataHora) < agora))
     .sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
 
   async function handleCancelar(id) {
@@ -154,7 +160,7 @@ export default function ConsultasPage() {
           </div>
           <div className="divide-y divide-gray-100">
             {passadas.slice(0, 3).map(ag => {
-              const status = STATUS_LABEL[ag.status]
+              const status = ativa(ag) ? AGUARDANDO_REGISTRO : STATUS_LABEL[ag.status]
               return (
                 <div key={ag.id} className="px-5 py-4 flex items-center gap-4">
                   <div className="w-12 flex-shrink-0 text-center">

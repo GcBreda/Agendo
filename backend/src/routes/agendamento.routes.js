@@ -3,7 +3,7 @@ const { body, query } = require('express-validator')
 const { authMiddleware, requireRole } = require('../middleware/auth.middleware')
 const { validate } = require('../middleware/validate.middleware')
 const {
-  horariosDisponiveis, criar, listar, cancelar
+  horariosDisponiveis, criar, listar, cancelar, realizar
 } = require('../controllers/agendamento.controller')
 
 const router = Router()
@@ -33,5 +33,7 @@ router.post('/',
 )
 
 router.patch('/:id/cancelar', cancelar)
+
+router.patch('/:id/realizar', requireRole('PROFISSIONAL'), realizar)
 
 module.exports = router

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAgendamentos, useCancelarAgendamento } from '../../hooks/useAgendamentos'
+import { useAgendamentos, useCancelarAgendamento, useRealizarAgendamento } from '../../hooks/useAgendamentos'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -23,6 +23,7 @@ const TIPO_LABEL = {
 export default function AgendaPage() {
   const { data: agendamentos = [], isLoading } = useAgendamentos()
   const { mutateAsync: cancelar, isPending: cancelando } = useCancelarAgendamento()
+  const { mutateAsync: realizar, isPending: realizando } = useRealizarAgendamento()
 
   const hoje     = new Date()
   const [semana, setSemana] = useState(0) // 0 = semana atual, 1 = próxima, -1 = anterior
@@ -69,6 +70,12 @@ export default function AgendaPage() {
     if (!window.confirm('Deseja cancelar esta consulta?')) return
     try { await cancelar(id) }
     catch { alert('Erro ao cancelar. Tente novamente.') }
+  }
+
+  async function handleRealizar(id) {
+    if (!window.confirm('Marcar esta consulta como realizada?')) return
+    try { await realizar(id) }
+    catch { alert('Erro ao marcar como realizada. Tente novamente.') }
   }
 
   const totalSemana = dias.reduce((acc, d) => acc + agendamentosDoDia(d).length, 0)
@@ -195,6 +202,12 @@ export default function AgendaPage() {
                           <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${status.cls}`}>
                             {status.label}
                           </span>
+                          {['PENDENTE','CONFIRMADO'].includes(ag.status) && new Date(ag.dataHora) <= new Date() && (
+                            <button onClick={() => handleRealizar(ag.id)} disabled={realizando}
+                              className="text-xs text-green-600 border border-green-200 px-2.5 py-1 rounded-lg hover:bg-green-50 disabled:opacity-50">
+                              Realizada
+                            </button>
+                          )}
                           {['PENDENTE','CONFIRMADO'].includes(ag.status) && (
                             <button onClick={() => handleCancelar(ag.id)} disabled={cancelando}
                               className="text-xs text-red-500 border border-red-200 px-2.5 py-1 rounded-lg hover:bg-red-50 disabled:opacity-50">

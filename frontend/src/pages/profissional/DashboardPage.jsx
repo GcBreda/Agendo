@@ -31,7 +31,8 @@ export default function ProfissionalDashboard() {
 
   const confirmadas = deHoje.filter(a => a.status === 'CONFIRMADO').length
   const realizadas  = agendamentos.filter(a => a.status === 'REALIZADO').length
-  const proximas    = agendamentos.filter(a => ['PENDENTE', 'CONFIRMADO'].includes(a.status))
+  const agora       = new Date()
+  const proximas    = agendamentos.filter(a => ['PENDENTE', 'CONFIRMADO'].includes(a.status) && new Date(a.dataHora) >= agora)
 
   // Pacientes únicos
   const pacientesUnicos = [...new Set(agendamentos.map(a => a.pacienteId))].length

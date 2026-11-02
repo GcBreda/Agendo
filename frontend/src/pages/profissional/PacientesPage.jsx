@@ -29,7 +29,10 @@ function ModalPaciente({ paciente, agendamentos, onClose }) {
 
   const realizadas  = sessoes.filter(a => a.status === 'REALIZADO').length
   const canceladas  = sessoes.filter(a => a.status === 'CANCELADO').length
-  const proxima     = sessoes.find(a => ['PENDENTE', 'CONFIRMADO'].includes(a.status))
+  const agora       = new Date()
+  // sessoes está em ordem decrescente; a próxima é a futura mais próxima de agora
+  const proxima     = [...sessoes].reverse()
+    .find(a => ['PENDENTE', 'CONFIRMADO'].includes(a.status) && new Date(a.dataHora) >= agora)
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 px-4">
@@ -166,7 +169,7 @@ export default function PacientesPage() {
       if (!acc[id].ultimaSessao || data > acc[id].ultimaSessao) {
         acc[id].ultimaSessao = data
       }
-      if (['PENDENTE','CONFIRMADO'].includes(ag.status)) {
+      if (['PENDENTE','CONFIRMADO'].includes(ag.status) && data >= new Date()) {
         if (!acc[id].proxima || data < new Date(acc[id].proxima)) {
           acc[id].proxima = ag.dataHora
         }

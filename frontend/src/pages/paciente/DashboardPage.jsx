@@ -8,7 +8,8 @@ export default function PacienteDashboard() {
   const { usuario } = useAuth()
   const { data: agendamentos = [], isLoading } = useAgendamentos()
 
-  const proximas  = agendamentos.filter(a => ['PENDENTE','CONFIRMADO'].includes(a.status))
+  const agora     = new Date()
+  const proximas  = agendamentos.filter(a => ['PENDENTE','CONFIRMADO'].includes(a.status) && new Date(a.dataHora) >= agora)
   const proxima   = proximas.sort((a,b) => new Date(a.dataHora) - new Date(b.dataHora))[0]
   const realizadas = agendamentos.filter(a => a.status === 'REALIZADO').length
 

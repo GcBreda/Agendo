@@ -52,3 +52,15 @@ export function useCancelarAgendamento() {
     }
   })
 }
+
+// ── Marca um agendamento como realizado (profissional) ───────
+export function useRealizarAgendamento() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id) => agendamentoService.realizar(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agendamentos'] })
+    }
+  })
+}
