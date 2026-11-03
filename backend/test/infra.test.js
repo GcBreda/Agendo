@@ -37,7 +37,16 @@ describe('exigirBancoDeTeste', () => {
   })
 
   test('recusa URL ausente', () => {
-    assert.throws(() => exigirBancoDeTeste(undefined), /_test/)
+    // Remove DATABASE_URL só durante este teste: sem isso, exigirBancoDeTeste(undefined)
+    // usaria o valor padrão (process.env.DATABASE_URL) carregado do .env.test.
+    const urlOriginal = process.env.DATABASE_URL
+    delete process.env.DATABASE_URL
+    try {
+      assert.throws(() => exigirBancoDeTeste(), /_test/)
+      assert.throws(() => exigirBancoDeTeste(undefined), /_test/)
+    } finally {
+      if (urlOriginal !== undefined) process.env.DATABASE_URL = urlOriginal
+    }
   })
 
   test('a mensagem de erro não mostra a senha', () => {
