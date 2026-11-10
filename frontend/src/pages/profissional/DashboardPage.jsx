@@ -45,7 +45,7 @@ export default function ProfissionalDashboard() {
     <DashboardLayout titulo="Visão geral">
 
       {/* Boas vindas */}
-      <div className="bg-indigo-600 rounded-xl px-5 py-4 flex items-center justify-between">
+      <div className="bg-indigo-600 rounded-xl px-5 py-4 flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-sm font-medium text-white">
             Bom dia, {usuario?.nome?.split(' ')[0]}!
@@ -61,7 +61,7 @@ export default function ProfissionalDashboard() {
       </div>
 
       {/* Métricas */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <p className="text-xs text-gray-400 mb-1">Consultas hoje</p>
           <p className="text-2xl font-semibold text-gray-900">{isLoading ? '...' : deHoje.length}</p>
@@ -84,10 +84,10 @@ export default function ProfissionalDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
         {/* Agenda de hoje */}
-        <div className="col-span-2 bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="md:col-span-2 bg-white border border-gray-200 rounded-xl overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             <h2 className="text-sm font-medium text-gray-900">Agenda de hoje</h2>
             <Link to="/profissional/agenda" className="text-xs text-indigo-600 hover:underline">Ver completa →</Link>
@@ -104,7 +104,7 @@ export default function ProfissionalDashboard() {
               {deHoje.map(ag => {
                 const status = STATUS_LABEL[ag.status] || STATUS_LABEL.PENDENTE
                 return (
-                  <div key={ag.id} className="px-5 py-3.5 flex items-center gap-3">
+                  <div key={ag.id} className="px-5 py-3.5 flex flex-wrap md:flex-nowrap items-center gap-x-3 gap-y-2">
                     <span className="text-xs text-gray-400 w-10 text-right flex-shrink-0">
                       {formatarHora(ag.dataHora)}
                     </span>
@@ -113,13 +113,13 @@ export default function ProfissionalDashboard() {
                       ag.status === 'REALIZADO'  ? 'bg-green-500'  :
                       ag.status === 'CANCELADO'  ? 'bg-red-400'    : 'bg-amber-400'
                     }`}/>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-[10rem] md:min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">
                         {ag.paciente?.usuario?.nome}
                       </p>
                       <p className="text-xs text-gray-400">{TIPO_LABEL[ag.tipoSessao]} · 50 min</p>
                     </div>
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${status.cls}`}>
+                    <span className={`ml-auto text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${status.cls}`}>
                       {status.label}
                     </span>
                   </div>
