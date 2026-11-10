@@ -79,6 +79,35 @@ enum StatusNotificacao {
   FALHOU
 }
 
+enum AcaoProntuario {
+  LEITURA
+  CRIACAO
+  EDICAO
+  NEGADO
+}
+
+enum RecursoProntuario {
+  PRONTUARIO
+  ANOTACAO_PESSOAL
+}
+
+// Motivo interno de um acesso NEGADO: fica só no log, nunca vai para o cliente
+enum MotivoNegado {
+  PERFIL_NAO_PERMITIDO
+  ENTRADA_INVALIDA
+  SEM_VINCULO
+  SEM_CONSENTIMENTO
+  NAO_ENCONTRADO
+  VERSAO_DESATUALIZADA
+  FALHA_INTEGRIDADE
+}
+
+// Valores a confirmar pelo grupo com o professor (base legal do tratamento)
+enum BaseLegal {
+  CONSENTIMENTO
+  TUTELA_SAUDE
+}
+
 // ─────────────────────────────────────────
 // Entidades principais
 // ─────────────────────────────────────────
@@ -125,11 +154,14 @@ model Paciente {
   observacoes      String?
   criadoEm         DateTime @default(now()) @map("criado_em")
 
-  usuario       Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  agendamentos  Agendamento[]
-  pagamentos    Pagamento[]
-  prontuarios   Prontuario[]
-  avaliacoes    Avaliacao[]
+  usuario           Usuario           @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  agendamentos      Agendamento[]
+  pagamentos        Pagamento[]
+  prontuarios       Prontuario[]
+  avaliacoes        Avaliacao[]
+  vinculos          Vinculo[]
+  consentimentos    Consentimento[]
+  anotacoesPessoais AnotacaoPessoal[]
 
   @@map("pacientes")
 }
@@ -145,11 +177,14 @@ model Profissional {
   ativo           Boolean       @default(true)
   criadoEm        DateTime      @default(now()) @map("criado_em")
 
-  usuario          Usuario          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  disponibilidades Disponibilidade[]
-  agendamentos     Agendamento[]
-  prontuarios      Prontuario[]
-  avaliacoes       Avaliacao[]
+  usuario           Usuario            @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  disponibilidades  Disponibilidade[]
+  agendamentos      Agendamento[]
+  prontuarios       Prontuario[]
+  avaliacoes        Avaliacao[]
+  versoesAutoradas  ProntuarioVersao[]
+  vinculos          Vinculo[]
+  anotacoesPessoais AnotacaoPessoal[]
 
   @@map("profissionais")
 }
@@ -190,23 +225,130 @@ model Agendamento {
   @@map("agendamentos")
 }
 
+// ─────────────────────────────────────────
+// Prontuário: ids e ponteiro em uma tabela, conteúdo cifrado em outra
+// ─────────────────────────────────────────
+
+// Só ids e o número da versão atual. Nenhum texto clínico.
+// O id é gerado no código (crypto.randomUUID) porque entra no AAD antes do INSERT.
 model Prontuario {
-  id              String   @id @default(uuid())
+  id              String   @id
   agendamentoId   String   @unique @map("agendamento_id")
   profissionalId  String   @map("profissional_id")
   pacienteId      String   @map("paciente_id")
-  anotacoes       String?
-  cid             String?
-  lembretes       String?
+  versaoAtual     Int      @map("versao_atual")
   criadoEm        DateTime @default(now()) @map("criado_em")
   atualizadoEm    DateTime @updatedAt @map("atualizado_em")
 
-  agendamento  Agendamento  @relation(fields: [agendamentoId], references: [id])
-  profissional Profissional @relation(fields: [profissionalId], references: [id])
-  paciente     Paciente     @relation(fields: [pacienteId], references: [id])
+  agendamento  Agendamento        @relation(fields: [agendamentoId], references: [id], onDelete: Restrict)
+  profissional Profissional       @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+  paciente     Paciente           @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
+  versoes      ProntuarioVersao[]
 
+  @@index([pacienteId, profissionalId])
   @@map("prontuarios")
 }
+
+// Só inserção: editar cria uma linha nova com numero + 1, nunca sobrescreve.
+model ProntuarioVersao {
+  id              String   @id @default(uuid())
+  prontuarioId    String   @map("prontuario_id")
+  numero          Int
+  conteudoCifrado Bytes    @map("conteudo_cifrado") // JSON { v, anotacoes, cid, lembretes } cifrado
+  iv              Bytes                             // 12 bytes, aleatório por versão
+  authTag         Bytes    @map("auth_tag")         // 16 bytes
+  chaveId         Int      @default(1) @map("chave_id")
+  autorId         String   @map("autor_id")         // Profissional.id
+  criadoEm        DateTime @default(now()) @map("criado_em")
+
+  prontuario Prontuario   @relation(fields: [prontuarioId], references: [id], onDelete: Restrict)
+  autor      Profissional @relation(fields: [autorId], references: [id], onDelete: Restrict)
+
+  @@unique([prontuarioId, numero])
+  @@map("prontuario_versoes")
+}
+
+// Anotações pessoais do psicólogo: cifradas, separadas, nunca expostas ao paciente.
+// Só inserção: "editar" cria uma linha nova que aponta para a substituída.
+// O id é gerado no código porque entra no AAD.
+model AnotacaoPessoal {
+  id              String   @id
+  profissionalId  String   @map("profissional_id")
+  pacienteId      String   @map("paciente_id")
+  substituiId     String?  @unique @map("substitui_id") // cada anotação só pode ser substituída uma vez
+  conteudoCifrado Bytes    @map("conteudo_cifrado")
+  iv              Bytes
+  authTag         Bytes    @map("auth_tag")
+  chaveId         Int      @default(1) @map("chave_id")
+  criadoEm        DateTime @default(now()) @map("criado_em")
+
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+  paciente     Paciente     @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
+
+  // Auto-relacionamento: a anotação nova aponta para a que ela substitui.
+  substitui      AnotacaoPessoal? @relation("SubstituicaoAnotacao", fields: [substituiId], references: [id], onDelete: Restrict)
+  substituidaPor AnotacaoPessoal? @relation("SubstituicaoAnotacao")
+
+  @@index([profissionalId, pacienteId])
+  @@map("anotacoes_pessoais")
+}
+
+// Vínculo profissional ↔ paciente. Nasce quando o profissional confirma a primeira consulta.
+// Ativo = inicioEm <= agora e (fimEm nulo ou no futuro).
+model Vinculo {
+  id              String    @id @default(uuid())
+  profissionalId  String    @map("profissional_id")
+  pacienteId      String    @map("paciente_id")
+  inicioEm        DateTime  @default(now()) @map("inicio_em")
+  fimEm           DateTime? @map("fim_em")
+  criadoEm        DateTime  @default(now()) @map("criado_em")
+
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Restrict)
+  paciente     Paciente     @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
+
+  @@index([profissionalId, pacienteId])
+  @@map("vinculos")
+}
+
+// Consentimento por paciente. finalidade e baseLegal vêm da configuração do servidor, nunca do cliente.
+model Consentimento {
+  id          String    @id @default(uuid())
+  pacienteId  String    @map("paciente_id")
+  versaoTermo String    @map("versao_termo")
+  finalidade  String
+  baseLegal   BaseLegal @map("base_legal")
+  aceitoEm    DateTime  @default(now()) @map("aceito_em")
+  ip          String
+  revogadoEm  DateTime? @map("revogado_em")
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id], onDelete: Restrict)
+
+  @@index([pacienteId, aceitoEm])
+  @@map("consentimentos")
+}
+
+// Só inserção. Sem conteúdo clínico.
+// Sem chaves estrangeiras de propósito: o log sobrevive a qualquer outro registro.
+model LogAcessoProntuario {
+  id           String            @id @default(uuid())
+  usuarioId    String            @map("usuario_id")
+  perfil       Perfil
+  acao         AcaoProntuario
+  recurso      RecursoProntuario
+  motivo       MotivoNegado?     // preenchido só quando acao = NEGADO
+  pacienteId   String?           @map("paciente_id")
+  prontuarioId String?           @map("prontuario_id")
+  ip           String?
+  ocorridoEm   DateTime          @default(now()) @map("ocorrido_em")
+
+  @@index([pacienteId, ocorridoEm])
+  @@index([usuarioId, ocorridoEm])
+  @@map("logs_acesso_prontuario")
+}
+
+// ─────────────────────────────────────────
+// Demais entidades
+// ─────────────────────────────────────────
 
 model Pagamento {
   id          String          @id @default(uuid())
