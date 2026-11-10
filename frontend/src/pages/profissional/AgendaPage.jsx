@@ -27,6 +27,8 @@ export default function AgendaPage() {
 
   const hoje     = new Date()
   const [semana, setSemana] = useState(0) // 0 = semana atual, 1 = próxima, -1 = anterior
+  // Celular: posição (0 = domingo ... 6 = sábado) do dia escolhido na semana exibida. Começa em hoje.
+  const [diaSelecionado, setDiaSelecionado] = useState(hoje.getDay())
 
   // Calcula os 7 dias da semana selecionada
   function getDiasSemana() {
@@ -84,29 +86,98 @@ export default function AgendaPage() {
     <DashboardLayout titulo="Agenda">
 
       {/* Cabeçalho navegação */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-sm font-medium text-gray-900">{formatarSemana()}</h2>
           <p className="text-xs text-gray-400 mt-0.5">{totalSemana} consulta{totalSemana !== 1 ? 's' : ''} esta semana</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setSemana(s => s - 1)}
-            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-500">
+            className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-500">
             ‹
           </button>
-          <button onClick={() => setSemana(0)}
-            className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${semana === 0 ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+          <button onClick={() => { setSemana(0); setDiaSelecionado(hoje.getDay()) }}
+            className={`min-h-[40px] md:min-h-0 px-3 py-1.5 text-xs rounded-lg border transition-colors ${semana === 0 ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
             Hoje
           </button>
           <button onClick={() => setSemana(s => s + 1)}
-            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-500">
+            className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-500">
             ›
           </button>
         </div>
       </div>
 
-      {/* Grade semanal */}
-      <div className="grid grid-cols-7 gap-2">
+      {/* Celular (abaixo de md): seletor de dias + consultas do dia escolhido */}
+      <div className="md:hidden flex flex-col gap-3">
+        <div role="group" aria-label="Dias da semana" className="grid grid-cols-7 gap-1">
+          {dias.map((dia, i) => {
+            const isHoje      = mesmodia(dia, hoje)
+            const isPassado   = dia < hoje && !isHoje
+            const qtd         = agendamentosDoDia(dia).length
+            const selecionado = i === diaSelecionado
+
+            return (
+              <button key={i} type="button" onClick={() => setDiaSelecionado(i)}
+                aria-pressed={selecionado}
+                aria-label={`${DIAS_SEMANA[dia.getDay()]}, ${dia.getDate()} de ${MESES[dia.getMonth()]}: ${qtd} consulta${qtd !== 1 ? 's' : ''}`}
+                className={`min-h-[56px] flex flex-col items-center justify-center gap-0.5 rounded-lg border text-xs transition-colors
+                  ${selecionado ? 'bg-indigo-600 border-indigo-600 text-white'
+                    : isHoje    ? 'bg-white border-indigo-400 text-indigo-700'
+                    : isPassado ? 'bg-white border-gray-200 text-gray-300'
+                    :             'bg-white border-gray-200 text-gray-600'}`}>
+                <span className="font-medium">{DIAS_SEMANA[dia.getDay()]}</span>
+                <span className="text-sm font-semibold leading-none">{dia.getDate()}</span>
+                <span className={selecionado ? 'text-indigo-100' : qtd > 0 ? 'text-indigo-600 font-medium' : 'text-gray-300'}>
+                  {isLoading ? '…' : qtd}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100">
+            <h2 className="text-sm font-medium text-gray-900">
+              {DIAS_SEMANA[dias[diaSelecionado].getDay()]}, {dias[diaSelecionado].getDate()} de {MESES[dias[diaSelecionado].getMonth()]}
+            </h2>
+            {!isLoading && (
+              <p className="text-xs text-gray-400 mt-0.5">
+                {agendamentosDoDia(dias[diaSelecionado]).length} consulta{agendamentosDoDia(dias[diaSelecionado]).length !== 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+
+          {isLoading ? (
+            <div className="px-4 py-8 text-center text-sm text-gray-400">Carregando...</div>
+          ) : agendamentosDoDia(dias[diaSelecionado]).length === 0 ? (
+            <div className="px-4 py-8 text-center text-sm text-gray-400">Nenhuma consulta neste dia</div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {agendamentosDoDia(dias[diaSelecionado]).map(ag => {
+                const status = STATUS_LABEL[ag.status] || STATUS_LABEL.PENDENTE
+                return (
+                  <div key={ag.id} className="px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <span className="text-xs text-gray-400 w-10 text-right flex-shrink-0">
+                      {formatarHora(ag.dataHora)}
+                    </span>
+                    <div className={`w-1 h-10 rounded-full flex-shrink-0 ${status.bar}`}/>
+                    <div className="flex-1 min-w-[10rem]">
+                      <p className="text-sm font-medium text-gray-900 truncate">{ag.paciente?.usuario?.nome}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{TIPO_LABEL[ag.tipoSessao]} · 50 min</p>
+                    </div>
+                    <span className={`ml-auto text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${status.cls}`}>
+                      {status.label}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Grade semanal (a partir de md) */}
+      <div className="hidden md:grid grid-cols-7 gap-2">
         {dias.map((dia, i) => {
           const isHoje      = mesmodia(dia, hoje)
           const agsDoDia    = agendamentosDoDia(dia)
@@ -185,12 +256,12 @@ export default function AgendaPage() {
                   {agsDoDia.map(ag => {
                     const status = STATUS_LABEL[ag.status] || STATUS_LABEL.PENDENTE
                     return (
-                      <div key={ag.id} className="px-5 py-3.5 flex items-center gap-4">
+                      <div key={ag.id} className="px-5 py-3.5 flex flex-wrap md:flex-nowrap items-center gap-x-4 gap-y-2">
                         <span className="text-xs text-gray-400 w-10 text-right flex-shrink-0">
                           {formatarHora(ag.dataHora)}
                         </span>
                         <div className={`w-1 h-10 rounded-full flex-shrink-0 ${status.bar}`}/>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-[10rem] md:min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">
                             {ag.paciente?.usuario?.nome}
                           </p>
@@ -198,19 +269,19 @@ export default function AgendaPage() {
                             {TIPO_LABEL[ag.tipoSessao]} · 50 min
                           </p>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="ml-auto flex items-center gap-2 flex-shrink-0">
                           <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${status.cls}`}>
                             {status.label}
                           </span>
                           {['PENDENTE','CONFIRMADO'].includes(ag.status) && new Date(ag.dataHora) <= new Date() && (
                             <button onClick={() => handleRealizar(ag.id)} disabled={realizando}
-                              className="text-xs text-green-600 border border-green-200 px-2.5 py-1 rounded-lg hover:bg-green-50 disabled:opacity-50">
+                              className="min-h-[40px] md:min-h-0 text-xs text-green-600 border border-green-200 px-2.5 py-1 rounded-lg hover:bg-green-50 disabled:opacity-50">
                               Realizada
                             </button>
                           )}
                           {['PENDENTE','CONFIRMADO'].includes(ag.status) && (
                             <button onClick={() => handleCancelar(ag.id)} disabled={cancelando}
-                              className="text-xs text-red-500 border border-red-200 px-2.5 py-1 rounded-lg hover:bg-red-50 disabled:opacity-50">
+                              className="min-h-[40px] md:min-h-0 text-xs text-red-500 border border-red-200 px-2.5 py-1 rounded-lg hover:bg-red-50 disabled:opacity-50">
                               Cancelar
                             </button>
                           )}
