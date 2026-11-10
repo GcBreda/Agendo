@@ -97,7 +97,7 @@ export default function ConsultasPage() {
             {proximas.map(ag => {
               const status = STATUS_LABEL[ag.status] || STATUS_LABEL.PENDENTE
               return (
-                <div key={ag.id} className="px-5 py-4 flex items-center gap-4">
+                <div key={ag.id} className="px-5 py-4 flex flex-wrap md:flex-nowrap items-center gap-x-4 gap-y-2">
                   {/* Data */}
                   <div className="w-12 flex-shrink-0 text-center">
                     <div className="text-lg font-semibold text-gray-900 leading-none">
@@ -112,7 +112,7 @@ export default function ConsultasPage() {
                   <div className={`w-1 h-12 rounded-full flex-shrink-0 ${ag.status === 'CONFIRMADO' ? 'bg-indigo-500' : 'bg-amber-400'}`}/>
 
                   {/* Info */}
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-[10rem] md:min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {ag.profissional?.usuario?.nome}
                     </p>
@@ -125,7 +125,7 @@ export default function ConsultasPage() {
                   </div>
 
                   {/* Status + ações */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="ml-auto flex items-center gap-2 flex-shrink-0">
                     <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${status.cls}`}>
                       {status.label}
                     </span>
@@ -162,7 +162,7 @@ export default function ConsultasPage() {
             {passadas.slice(0, 3).map(ag => {
               const status = ativa(ag) ? AGUARDANDO_REGISTRO : STATUS_LABEL[ag.status]
               return (
-                <div key={ag.id} className="px-5 py-4 flex items-center gap-4">
+                <div key={ag.id} className="px-5 py-4 flex flex-wrap md:flex-nowrap items-center gap-x-4 gap-y-2">
                   <div className="w-12 flex-shrink-0 text-center">
                     <div className="text-lg font-semibold text-gray-400 leading-none">
                       {new Date(ag.dataHora).getDate()}
@@ -172,7 +172,7 @@ export default function ConsultasPage() {
                     </div>
                   </div>
                   <div className="w-1 h-12 rounded-full flex-shrink-0 bg-gray-200"/>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-[10rem] md:min-w-0">
                     <p className="text-sm font-medium text-gray-600 truncate">
                       {ag.profissional?.usuario?.nome}
                     </p>
@@ -180,7 +180,7 @@ export default function ConsultasPage() {
                       {TIPO_LABEL[ag.tipoSessao]} · {formatarHora(ag.dataHora)}
                     </p>
                   </div>
-                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${status.cls}`}>
+                  <span className={`ml-auto text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${status.cls}`}>
                     {status.label}
                   </span>
                 </div>

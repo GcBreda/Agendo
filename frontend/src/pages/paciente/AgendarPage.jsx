@@ -89,15 +89,15 @@ export default function AgendarPage() {
               {profissionais.map(p => (
                 <div key={p.id} onClick={() => setProfissional(p)}
                   className={`border rounded-xl p-4 cursor-pointer transition-all ${profissional?.id === p.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap md:flex-nowrap items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-green-100 text-green-700 text-sm font-medium flex items-center justify-center flex-shrink-0">
                       {p.usuario?.nome?.split(' ').slice(0,2).map(n=>n[0]).join('')}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-[10rem]">
                       <p className="text-sm font-medium text-gray-900">{p.usuario?.nome}</p>
                       <p className="text-xs text-gray-400">{p.especialidade?.replace(/_/g,' ')} · CRP {p.crp}</p>
                     </div>
-                    <p className="text-sm font-medium text-indigo-600">R$ {Number(p.valorSessao).toFixed(0)}/sessão</p>
+                    <p className="ml-auto whitespace-nowrap text-sm font-medium text-indigo-600">R$ {Number(p.valorSessao).toFixed(0)}/sessão</p>
                   </div>
                 </div>
               ))}
@@ -124,7 +124,7 @@ export default function AgendarPage() {
               <label className="block text-xs font-medium text-gray-500 mb-2">Horários disponíveis</label>
               {loadingHorarios ? <p className="text-xs text-gray-400">Buscando horários...</p> :
                horarios.length === 0 ? <p className="text-xs text-gray-400">Nenhum horário disponível nesta data.</p> : (
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-4 gap-2">
                   {horarios.map(h => (
                     <button key={h.hora} disabled={!h.disponivel} onClick={() => setHorario(h.hora)}
                       className={`py-2 rounded-lg text-xs font-medium transition-all
@@ -159,10 +159,10 @@ export default function AgendarPage() {
         <div className="bg-white border border-gray-200 rounded-xl p-5">
           <h2 className="text-sm font-medium text-gray-900 mb-4">Confirmar agendamento</h2>
           <div className="bg-gray-50 rounded-lg p-4 mb-5 space-y-2">
-            <div className="flex justify-between text-xs"><span className="text-gray-500">Profissional</span><span className="font-medium">{profissional?.usuario?.nome}</span></div>
-            <div className="flex justify-between text-xs"><span className="text-gray-500">Data</span><span className="font-medium">{new Date(data+'T00:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})}</span></div>
-            <div className="flex justify-between text-xs"><span className="text-gray-500">Horário</span><span className="font-medium">{horario} · 50 min</span></div>
-            <div className="flex justify-between text-xs"><span className="text-gray-500">Sessão</span><span className="font-medium">{TIPOS_SESSAO.find(t=>t.value===tipoSessao)?.label}</span></div>
+            <div className="flex justify-between gap-3 text-xs"><span className="text-gray-500">Profissional</span><span className="font-medium text-right">{profissional?.usuario?.nome}</span></div>
+            <div className="flex justify-between gap-3 text-xs"><span className="text-gray-500">Data</span><span className="font-medium text-right">{new Date(data+'T00:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})}</span></div>
+            <div className="flex justify-between gap-3 text-xs"><span className="text-gray-500">Horário</span><span className="font-medium text-right">{horario} · 50 min</span></div>
+            <div className="flex justify-between gap-3 text-xs"><span className="text-gray-500">Sessão</span><span className="font-medium text-right">{TIPOS_SESSAO.find(t=>t.value===tipoSessao)?.label}</span></div>
             <div className="flex justify-between text-xs pt-2 border-t border-gray-200">
               <span className="text-gray-500 font-medium">Total</span>
               <span className="text-indigo-600 font-semibold text-sm">R$ {Number(profissional?.valorSessao).toFixed(2)}</span>

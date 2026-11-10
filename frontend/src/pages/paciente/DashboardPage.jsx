@@ -24,7 +24,7 @@ export default function PacienteDashboard() {
   return (
     <DashboardLayout titulo="Início">
       {proxima && (
-        <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-5 py-4 flex items-center justify-between">
+        <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-5 py-4 flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm font-medium text-indigo-800">Bom dia, {usuario.nome.split(' ')[0]}!</p>
             <p className="text-xs text-indigo-600 mt-0.5">
@@ -37,7 +37,7 @@ export default function PacienteDashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-gray-50 rounded-lg p-4">
           <p className="text-xs text-gray-500 mb-1">Próxima consulta</p>
           <p className="text-xl font-medium text-gray-900">
@@ -69,16 +69,16 @@ export default function PacienteDashboard() {
             </Link>
           </div>
         ) : proximas.slice(0,3).map(ag => (
-          <div key={ag.id} className="flex items-center gap-3 py-3 border-b border-gray-100 last:border-0">
+          <div key={ag.id} className="flex flex-wrap md:flex-nowrap items-center gap-x-3 gap-y-2 py-3 border-b border-gray-100 last:border-0">
             <span className="text-xs text-gray-400 w-10 text-right flex-shrink-0">
               {new Date(ag.dataHora).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}
             </span>
             <div className="w-0.5 h-9 rounded-full bg-indigo-500 flex-shrink-0"/>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-[10rem] md:min-w-0">
               <p className="text-xs font-medium text-gray-900 truncate">{ag.profissional?.usuario?.nome}</p>
               <p className="text-xs text-gray-400">{new Date(ag.dataHora).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · {ag.tipoSessao?.replace(/_/g,' ')}</p>
             </div>
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${ag.status === 'CONFIRMADO' ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-500'}`}>
+            <span className={`ml-auto text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${ag.status === 'CONFIRMADO' ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-500'}`}>
               {ag.status === 'CONFIRMADO' ? 'Confirmada' : 'Pendente'}
             </span>
           </div>
