@@ -29,11 +29,14 @@ function ModalPaciente({ paciente, agendamentos, onClose }) {
 
   const realizadas  = sessoes.filter(a => a.status === 'REALIZADO').length
   const canceladas  = sessoes.filter(a => a.status === 'CANCELADO').length
-  const proxima     = sessoes.find(a => ['PENDENTE', 'CONFIRMADO'].includes(a.status))
+  const agora       = new Date()
+  // sessoes está em ordem decrescente; a próxima é a futura mais próxima de agora
+  const proxima     = [...sessoes].reverse()
+    .find(a => ['PENDENTE', 'CONFIRMADO'].includes(a.status) && new Date(a.dataHora) >= agora)
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 px-4">
-      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col">
+      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90dvh] overflow-y-auto flex flex-col">
 
         {/* Cabeçalho */}
         <div className="flex items-center gap-4 p-6 border-b border-gray-100">
@@ -42,7 +45,7 @@ function ModalPaciente({ paciente, agendamentos, onClose }) {
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-sm font-medium text-gray-900">{paciente.nome}</h2>
-            <p className="text-xs text-gray-400 mt-0.5">{paciente.email}</p>
+            <p className="text-xs text-gray-400 mt-0.5 break-words">{paciente.email}</p>
             <div className="flex gap-2 mt-2">
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                 paciente.status === 'novo' ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700'
@@ -86,7 +89,7 @@ function ModalPaciente({ paciente, agendamentos, onClose }) {
         )}
 
         {/* Histórico de sessões */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex-1 md:overflow-y-auto px-6 py-4">
           <h3 className="text-xs font-medium text-gray-500 mb-3">Histórico de sessões</h3>
           {sessoes.length === 0 ? (
             <p className="text-xs text-gray-400">Nenhuma sessão registrada</p>
@@ -166,7 +169,7 @@ export default function PacientesPage() {
       if (!acc[id].ultimaSessao || data > acc[id].ultimaSessao) {
         acc[id].ultimaSessao = data
       }
-      if (['PENDENTE','CONFIRMADO'].includes(ag.status)) {
+      if (['PENDENTE','CONFIRMADO'].includes(ag.status) && data >= new Date()) {
         if (!acc[id].proxima || data < new Date(acc[id].proxima)) {
           acc[id].proxima = ag.dataHora
         }
@@ -199,7 +202,7 @@ export default function PacientesPage() {
       )}
 
       {/* Métricas */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <p className="text-xs text-gray-400 mb-1">Total de pacientes</p>
           <p className="text-2xl font-semibold text-gray-900">{isLoading ? '...' : pacientes.length}</p>
@@ -215,12 +218,12 @@ export default function PacientesPage() {
       </div>
 
       {/* Filtros e busca */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <input
           value={busca}
           onChange={e => setBusca(e.target.value)}
           placeholder="Buscar por nome ou e-mail..."
-          className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:border-indigo-500"
+          className="md:flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:border-indigo-500"
         />
         <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
           {[
@@ -229,7 +232,7 @@ export default function PacientesPage() {
             { id: 'novo',  label: 'Novos' },
           ].map(f => (
             <button key={f.id} onClick={() => setFiltroStatus(f.id)}
-              className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${
+              className={`flex-1 md:flex-none min-h-[40px] md:min-h-0 px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${
                 filtroStatus === f.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
               }`}>
               {f.label}
@@ -240,7 +243,7 @@ export default function PacientesPage() {
 
       {/* Lista de pacientes */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="px-5 py-3 border-b border-gray-100 grid grid-cols-12 gap-4">
+        <div className="px-5 py-3 border-b border-gray-100 hidden md:grid grid-cols-12 gap-4">
           <span className="col-span-4 text-xs font-medium text-gray-400">Paciente</span>
           <span className="col-span-2 text-xs font-medium text-gray-400 text-center">Sessões</span>
           <span className="col-span-3 text-xs font-medium text-gray-400">Próxima consulta</span>
@@ -257,10 +260,10 @@ export default function PacientesPage() {
         ) : (
           <div className="divide-y divide-gray-100">
             {pacientesFiltrados.map(p => (
-              <div key={p.id} className="px-5 py-4 grid grid-cols-12 gap-4 items-center hover:bg-gray-50 transition-colors">
+              <div key={p.id} className="px-5 py-4 grid grid-cols-1 gap-3 md:grid-cols-12 md:gap-4 items-center hover:bg-gray-50 transition-colors">
 
                 {/* Nome */}
-                <div className="col-span-4 flex items-center gap-3 min-w-0">
+                <div className="md:col-span-4 flex items-center gap-3 min-w-0">
                   <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium flex items-center justify-center flex-shrink-0">
                     {iniciais(p.nome)}
                   </div>
@@ -271,25 +274,32 @@ export default function PacientesPage() {
                 </div>
 
                 {/* Sessões */}
-                <div className="col-span-2 text-center">
-                  <p className="text-sm font-medium text-gray-900">{p.sessoes}</p>
-                  <p className="text-xs text-gray-400">{p.realizadas} realizadas</p>
+                <div className="flex justify-between gap-3 md:col-span-2 md:block md:text-center">
+                  <span className="md:hidden text-xs text-gray-400">Sessões</span>
+                  <div className="text-right md:text-center">
+                    <p className="text-sm font-medium text-gray-900">{p.sessoes}</p>
+                    <p className="text-xs text-gray-400">{p.realizadas} realizadas</p>
+                  </div>
                 </div>
 
                 {/* Próxima */}
-                <div className="col-span-3">
-                  {p.proxima ? (
-                    <>
-                      <p className="text-xs font-medium text-gray-800">{formatarData(p.proxima)}</p>
-                      <p className="text-xs text-gray-400">{formatarHora(p.proxima)}</p>
-                    </>
-                  ) : (
-                    <p className="text-xs text-gray-300">—</p>
-                  )}
+                <div className="flex justify-between gap-3 md:col-span-3 md:block">
+                  <span className="md:hidden text-xs text-gray-400">Próxima consulta</span>
+                  <div className="text-right md:text-left">
+                    {p.proxima ? (
+                      <>
+                        <p className="text-xs font-medium text-gray-800">{formatarData(p.proxima)}</p>
+                        <p className="text-xs text-gray-400">{formatarHora(p.proxima)}</p>
+                      </>
+                    ) : (
+                      <p className="text-xs text-gray-300">—</p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Status */}
-                <div className="col-span-2">
+                <div className="flex items-center justify-between gap-3 md:col-span-2 md:block">
+                  <span className="md:hidden text-xs text-gray-400">Status</span>
                   <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
                     p.status === 'novo' ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700'
                   }`}>
@@ -298,9 +308,9 @@ export default function PacientesPage() {
                 </div>
 
                 {/* Ação */}
-                <div className="col-span-1 flex justify-end">
+                <div className="flex md:col-span-1 md:justify-end">
                   <button onClick={() => setPacienteModal(p)}
-                    className="text-xs text-indigo-600 border border-indigo-200 px-2.5 py-1.5 rounded-lg hover:bg-indigo-50">
+                    className="w-full md:w-auto min-h-[40px] md:min-h-0 text-xs text-indigo-600 border border-indigo-200 px-2.5 py-1.5 rounded-lg hover:bg-indigo-50">
                     Ver
                   </button>
                 </div>

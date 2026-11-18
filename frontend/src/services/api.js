@@ -86,7 +86,8 @@ export const agendamentoService = {
   listar:               ()       => api.get('/agendamentos'),
   disponiveis:          (params) => api.get('/agendamentos/disponiveis', { params }),
   criar:                (dados)  => api.post('/agendamentos', dados),
-  cancelar:             (id)     => api.patch(`/agendamentos/${id}/cancelar`)
+  cancelar:             (id)     => api.patch(`/agendamentos/${id}/cancelar`),
+  realizar:             (id)     => api.patch(`/agendamentos/${id}/realizar`)
 }
 
 export const prontuarioService = {

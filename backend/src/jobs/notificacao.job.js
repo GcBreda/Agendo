@@ -90,4 +90,13 @@ worker.on('failed', (job, err) => {
   console.error(`[Job falhou] ${job.id}:`, err.message)
 })
 
-module.exports = { agendarNotificacoes }
+// ── Fecha fila e worker (usado pelos testes para encerrar o processo limpo) ──
+async function fecharNotificacoes() {
+  // Espera o worker terminar de iniciar: fechar antes disso deixa um timer de 30 s
+  // da BullMQ (checagem de jobs travados) segurando o processo.
+  await worker.waitUntilReady()
+  await worker.close()
+  await notificacaoQueue.close()
+}
+
+module.exports = { agendarNotificacoes, fecharNotificacoes }

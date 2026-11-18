@@ -101,10 +101,10 @@ export default function FinanceiroPage() {
       </div>
 
       {/* Métricas */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <p className="text-xs text-gray-400 mb-1">Receita do mês</p>
-          <p className="text-xl font-semibold text-gray-900">{formatarMoeda(receitaMes)}</p>
+          <p className="text-lg sm:text-xl font-semibold text-gray-900">{formatarMoeda(receitaMes)}</p>
           <p className={`text-xs mt-1 ${Number(variacao) >= 0 ? 'text-green-600' : 'text-red-500'}`}>
             {Number(variacao) >= 0 ? '↑' : '↓'} {Math.abs(variacao)}% vs mês anterior
           </p>
@@ -128,10 +128,10 @@ export default function FinanceiroPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
         {/* Gráfico de barras */}
-        <div className="col-span-2 bg-white border border-gray-200 rounded-xl p-5">
+        <div className="md:col-span-2 bg-white border border-gray-200 rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-medium text-gray-900">Sessões — últimos 6 meses</h2>
           </div>
@@ -207,13 +207,13 @@ export default function FinanceiroPage() {
             {doMes
               .sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
               .map(ag => (
-                <div key={ag.id} className="px-5 py-3.5 flex items-center gap-4">
+                <div key={ag.id} className="px-5 py-3.5 flex flex-wrap md:flex-nowrap items-center gap-x-4 gap-y-2">
                   <div className="w-12 flex-shrink-0 text-center">
                     <p className="text-sm font-medium text-gray-900">{new Date(ag.dataHora).getDate()}</p>
                     <p className="text-xs text-gray-400">{MESES[new Date(ag.dataHora).getMonth()].slice(0,3)}</p>
                   </div>
                   <div className="w-1 h-10 rounded-full bg-green-400 flex-shrink-0"/>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-[10rem] md:min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {ag.paciente?.usuario?.nome}
                     </p>
@@ -221,7 +221,7 @@ export default function FinanceiroPage() {
                       {ag.tipoSessao?.replace(/_/g, ' ')} · {new Date(ag.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="ml-auto flex items-center gap-3 flex-shrink-0">
                     <span className="text-sm font-medium text-green-600">
                       {formatarMoeda(valorSessao)}
                     </span>

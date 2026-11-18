@@ -166,7 +166,7 @@ function DsmPage() {
   return (
     <DashboardLayout titulo="DSM-5 — Manual Diagnóstico">
 
-      <div className="bg-indigo-600 rounded-xl px-6 py-5 flex items-start justify-between">
+      <div className="bg-indigo-600 rounded-xl px-6 py-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <h2 className="text-base font-medium text-white mb-1">
             DSM-5 — Manual Diagnóstico e Estatístico de Transtornos Mentais
@@ -185,7 +185,7 @@ function DsmPage() {
             </div>
           </div>
         </div>
-<div className="flex flex-col gap-2 flex-shrink-0">
+<div className="flex flex-row flex-wrap items-center gap-2 flex-shrink-0 md:flex-col md:flex-nowrap md:items-stretch">
           <div className="bg-white bg-opacity-20 rounded-lg px-3 py-2 text-center">
             <p className="text-xs text-white font-medium">DSM-5</p>
             <p className="text-xs text-indigo-200">2013</p>
@@ -199,7 +199,7 @@ function DsmPage() {
           </a>
         </div>
     </div>
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {SECOES.map(function(s) {
           const c = COR[s.cor]
           return (

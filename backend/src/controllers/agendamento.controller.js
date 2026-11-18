@@ -66,6 +66,10 @@ async function criar(req, res, next) {
     })
     if (!paciente) return res.status(403).json({ error: 'Apenas pacientes podem agendar.' })
 
+    if (new Date(dataHora) <= new Date()) {
+      return res.status(400).json({ error: 'Não é possível agendar em data ou horário passado.' })
+    }
+
     // Verifica conflito de horário (lock pelo banco)
     const conflito = await prisma.agendamento.findFirst({
       where: {
@@ -162,6 +166,40 @@ async function cancelar(req, res, next) {
   }
 }
 
+// ── PATCH /api/agendamentos/:id/realizar ─────────────────────
+async function realizar(req, res, next) {
+  try {
+    const { id } = req.params
+    const usuario = req.user
+
+    const agendamento = await prisma.agendamento.findUnique({
+      where: { id },
+      include: { profissional: true }
+    })
+    if (!agendamento) return res.status(404).json({ error: 'Agendamento não encontrado.' })
+
+    // Só o profissional da consulta pode marcá-la como realizada
+    if (agendamento.profissional.usuarioId !== usuario.id) {
+      return res.status(403).json({ error: 'Sem permissão para alterar esta consulta.' })
+    }
+    if (!['PENDENTE', 'CONFIRMADO'].includes(agendamento.status)) {
+      return res.status(400).json({ error: 'Apenas consultas pendentes ou confirmadas podem ser marcadas como realizadas.' })
+    }
+    if (agendamento.dataHora > new Date()) {
+      return res.status(400).json({ error: 'A consulta ainda não aconteceu.' })
+    }
+
+    const atualizado = await prisma.agendamento.update({
+      where: { id },
+      data:  { status: 'REALIZADO' }
+    })
+
+    res.json({ agendamento: atualizado })
+  } catch (err) {
+    next(err)
+  }
+}
+
 // ── Helpers ──────────────────────────────────────────────────
 function gerarSlots(inicio, fim, duracaoMin) {
   const slots  = []
@@ -178,4 +216,4 @@ function gerarSlots(inicio, fim, duracaoMin) {
   return slots
 }
 
-module.exports = { horariosDisponiveis, criar, listar, cancelar }
+module.exports = { horariosDisponiveis, criar, listar, cancelar, realizar }

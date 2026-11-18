@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
@@ -6,8 +6,7 @@ const navPaciente = [
   { path: '/paciente',           label: 'Início',           icon: GridIcon },
   { path: '/paciente/consultas', label: 'Minhas consultas', icon: CalIcon },
   { path: '/paciente/agendar',   label: 'Agendar consulta', icon: PlusIcon },
-  { path: '/paciente/historico', label: 'Histórico',        icon: ClockIcon },
-  { path: '/paciente/noticias', label: 'Notícias', icon: NewsIcon }
+  { path: '/paciente/historico', label: 'Histórico',        icon: ClockIcon }
 ]
 
 const navProfissional = [
@@ -18,8 +17,7 @@ const navProfissional = [
   { path: '/profissional/financeiro',   label: 'Financeiro',     icon: CardIcon },
   { path: '/profissional/codigo-etica', label: 'Código de Ética', icon: BookIcon },
   { path: '/profissional/dsm5', label: 'DSM-5', icon: BrainIcon },
-  { path: '/profissional/documentos-cfp', label: 'Documentos CFP', icon: FileIcon },
-  { path: '/profissional/noticias', label: 'Notícias', icon: NewsIcon }
+  { path: '/profissional/documentos-cfp', label: 'Documentos CFP', icon: FileIcon }
 ]
 
 export default function DashboardLayout({ children, titulo }) {
@@ -27,6 +25,28 @@ export default function DashboardLayout({ children, titulo }) {
   const location = useLocation()
   const navigate = useNavigate()
   const nav = isPaciente ? navPaciente : navProfissional
+
+  // Gaveta do menu em telas menores que lg (1024 px). A partir de lg a barra fica sempre visível.
+  const [menuAberto, setMenuAberto] = useState(false)
+  const botaoMenuRef = useRef(null)
+
+  // Fecha ao navegar para outra página
+  useEffect(() => {
+    setMenuAberto(false)
+  }, [location.pathname])
+
+  // Fecha com Esc e devolve o foco ao botão de menu
+  useEffect(() => {
+    if (!menuAberto) return
+    function aoApertarTecla(evento) {
+      if (evento.key === 'Escape') {
+        setMenuAberto(false)
+        botaoMenuRef.current?.focus()
+      }
+    }
+    document.addEventListener('keydown', aoApertarTecla)
+    return () => document.removeEventListener('keydown', aoApertarTecla)
+  }, [menuAberto])
 
   async function handleLogout() {
     await logout()
@@ -37,8 +57,25 @@ export default function DashboardLayout({ children, titulo }) {
     ?.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase() || '?'
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <aside className="w-56 bg-white border-r border-gray-100 flex flex-col flex-shrink-0">
+    <div className="flex h-dvh bg-gray-50 overflow-hidden">
+      {/* Fundo escurecido: só abaixo de lg e com a gaveta aberta. Tocar nele fecha. */}
+      {menuAberto && (
+        <div
+          className="fixed inset-0 z-30 bg-gray-900/40 lg:hidden"
+          onClick={() => setMenuAberto(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Abaixo de lg: gaveta fixa que desliza da esquerda. "invisible" tira os links do Tab quando fechada.
+          A partir de lg: static e sempre visível, como antes. */}
+      <aside
+        id="menu-lateral"
+        className={`fixed inset-y-0 left-0 z-40 w-56 bg-white border-r border-gray-100 flex flex-col flex-shrink-0
+          transition-[transform,visibility] duration-200 ease-out
+          lg:static lg:z-auto lg:translate-x-0 lg:visible lg:transition-none
+          ${menuAberto ? 'translate-x-0 visible' : '-translate-x-full invisible'}`}
+      >
         <div className="flex items-center gap-2 px-4 py-4 border-b border-gray-100">
           <div className="w-6 h-6 rounded-lg bg-indigo-600 flex items-center justify-center flex-shrink-0">
             <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 16 16" fill="none">
@@ -51,7 +88,7 @@ export default function DashboardLayout({ children, titulo }) {
           </span>
         </div>
 
-        <nav className="flex-1 py-3 px-2">
+        <nav className="flex-1 overflow-y-auto py-3 px-2">
           {nav.map(({ path, label, icon: Icon }) => {
             const active = location.pathname === path
             return (
@@ -92,13 +129,28 @@ export default function DashboardLayout({ children, titulo }) {
       </aside>
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-gray-100 px-6 h-12 flex items-center justify-between flex-shrink-0">
-          <h1 className="text-sm font-medium text-gray-900">{titulo}</h1>
-          <p className="text-xs text-gray-400">
+        <header className="bg-white border-b border-gray-100 px-6 h-12 flex items-center justify-between gap-3 flex-shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              ref={botaoMenuRef}
+              type="button"
+              onClick={() => setMenuAberto(aberto => !aberto)}
+              className="lg:hidden -ml-2.5 p-2.5 rounded-md text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+              aria-label="Menu de navegação"
+              aria-expanded={menuAberto}
+              aria-controls="menu-lateral"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </button>
+            <h1 className="text-sm font-medium text-gray-900 truncate">{titulo}</h1>
+          </div>
+          <p className="hidden lg:block text-xs text-gray-400">
             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
           </p>
         </header>
-        <main className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-5 flex flex-col gap-4">
           {children}
         </main>
       </div>
@@ -193,14 +245,6 @@ function FileIcon({ className }) {
     <svg className={className} viewBox="0 0 16 16" fill="none">
       <path d="M9 1H4a1 1 0 00-1 1v12a1 1 0 001 1h8a1 1 0 001-1V5L9 1z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M9 1v4h4M5 8h6M5 11h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-    </svg>
-  )
-}
-function NewsIcon({ className }) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" fill="none">
-      <rect x="1" y="2" width="14" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
-      <path d="M4 6h8M4 9h5M4 12h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
     </svg>
   )
 }

@@ -1,6 +1,5 @@
 
   import React from 'react'
-  import FeedNoticiasPage from './pages/FeedNoticiasPage'
   import DocumentosCfpPage from './pages/profissional/DocumentosCfpPage'
   import DsmPage from './pages/profissional/DsmPage'
   import CodigoEticaPage from './pages/profissional/CodigoEticaPage'
@@ -63,7 +62,6 @@ export default function App() {
             <Route path="/paciente/consultas" element={<RotaProtegida perfil="PACIENTE"><PacienteConsultas /></RotaProtegida>} />
             <Route path="/paciente/agendar"   element={<RotaProtegida perfil="PACIENTE"><PacienteAgendar /></RotaProtegida>} />
             <Route path="/paciente/historico" element={<RotaProtegida perfil="PACIENTE"><PacienteHistorico /></RotaProtegida>} />
-            <Route path="/paciente/noticias" element={<RotaProtegida perfil="PACIENTE"><FeedNoticiasPage /></RotaProtegida>} />
 
             <Route path="/profissional" element={<RotaProtegida perfil="PROFISSIONAL"><ProfissionalDashboard /></RotaProtegida>} />
             <Route path="/profissional/codigo-etica" element={<RotaProtegida perfil="PROFISSIONAL"><CodigoEticaPage /></RotaProtegida>} />
@@ -73,7 +71,6 @@ export default function App() {
             <Route path="/profissional/financeiro"  element={<RotaProtegida perfil="PROFISSIONAL"><ProfissionalFinanceiro /></RotaProtegida>} />
             <Route path="/profissional/dsm5" element={<RotaProtegida perfil="PROFISSIONAL"><DsmPage /></RotaProtegida>} />
             <Route path="/profissional/documentos-cfp" element={<RotaProtegida perfil="PROFISSIONAL"><DocumentosCfpPage /></RotaProtegida>} />
-            <Route path="/profissional/noticias" element={<RotaProtegida perfil="PROFISSIONAL"><FeedNoticiasPage /></RotaProtegida>} />
 
             <Route path="/configuracoes" element={<RotaProtegida><ConfiguracoesPage /></RotaProtegida>} />
 
