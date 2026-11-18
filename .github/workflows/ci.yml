@@ -1,0 +1,94 @@
+# Testes automáticos a cada pull request e a cada mudança na main.
+# Usa só valores fictícios: nenhum segredo real é necessário aqui.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (testes)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: agendo
+          POSTGRES_PASSWORD: agendo
+          POSTGRES_DB: agendo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U agendo -d agendo_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # O nome do banco termina em _test, como a trava dos testes exige.
+      DATABASE_URL: postgresql://agendo:agendo@localhost:5432/agendo_test
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: valor-ficticio-so-para-o-ci
+      JWT_REFRESH_SECRET: outro-valor-ficticio-so-para-o-ci
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Criar as tabelas no banco de teste
+        run: npx prisma migrate deploy --schema src/prisma/schema.prisma
+
+      - name: Gerar o cliente do Prisma
+        run: npx prisma generate --schema src/prisma/schema.prisma
+
+      - name: Rodar os testes
+        run: npm test
+
+  frontend:
+    name: Frontend (build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Gerar o build
+        run: npm run build
