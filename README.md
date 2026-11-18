@@ -13,7 +13,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-4169E1?logo=postgresql&logoColor=white)
 ![Prisma](https://img.shields.io/badge/Prisma-5-2D3748?logo=prisma&logoColor=white)
 
-[Sobre](#sobre) · [Telas](#telas) · [Funcionalidades](#funcionalidades) · [Segurança](#segurança-e-privacidade) · [Arquitetura](#arquitetura) · [Como rodar](#como-rodar-localmente) · [Roteiro](#roteiro) · [Equipe](#equipe)
+[Sobre](#sobre) · [Telas](#telas) · [Funcionalidades](#funcionalidades) · [Segurança](#segurança-e-privacidade) · [Arquitetura](#arquitetura) · [Como rodar](#como-rodar-localmente) · [Roteiro](#roteiro) · [Equipe](#equipe) · [Licença](#licença)
 
 <br>
 
@@ -256,3 +256,7 @@ Projeto Integrador do curso de Análise e Desenvolvimento de Sistemas da Univers
 | Mateus Alves | Desenvolvedor |
 | Thiago Yamada | Desenvolvedor |
 | Matheus Casaburi de Oliveira | Q.A. |
+
+## Licença
+
+Este repositório não tem licença de código aberto. O código está público para leitura e avaliação, mas todos os direitos são reservados aos autores. Para usar qualquer parte dele em outro projeto, fale com a equipe.
