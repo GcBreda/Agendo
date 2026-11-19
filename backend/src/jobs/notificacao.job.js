@@ -4,14 +4,24 @@
 const { Queue, Worker } = require('bullmq')
 const { prisma } = require('../prisma/client')
 
+// Em produção sem REDIS_URL (como na demonstração online), os lembretes ficam desligados
+// e o agendamento continua funcionando. Em desenvolvimento e nos testes, usa o Redis local.
+const filaAtiva = Boolean(process.env.REDIS_URL) || process.env.NODE_ENV !== 'production'
+
 const redisConnection = process.env.REDIS_URL
   ? { url: process.env.REDIS_URL }
   : { host: 'localhost', port: 6379 }
 
-const notificacaoQueue = new Queue('notificacoes', { connection: redisConnection })
+const notificacaoQueue = filaAtiva ? new Queue('notificacoes', { connection: redisConnection }) : null
+
+if (!filaAtiva) {
+  console.log('[Lembretes] REDIS_URL não definida em produção: lembretes desligados nesta instância.')
+}
 
 // ── Agenda os 3 lembretes para um agendamento ────────────────
 async function agendarNotificacoes(agendamento) {
+  if (!filaAtiva) return
+
   const dataConsulta = new Date(agendamento.dataHora)
 
   const lembretes = [
@@ -42,56 +52,59 @@ async function agendarNotificacoes(agendamento) {
 }
 
 // ── Worker: processa os jobs da fila ─────────────────────────
-const worker = new Worker(
-  'notificacoes',
-  async job => {
-    const { agendamentoId, tipo } = job.data
+async function processarLembrete(job) {
+  const { agendamentoId, tipo } = job.data
 
-    // Verifica se o agendamento ainda está ativo
-    const agendamento = await prisma.agendamento.findUnique({
-      where: { id: agendamentoId },
-      include: {
-        paciente:     { include: { usuario: true } },
-        profissional: { include: { usuario: true } }
-      }
-    })
-
-    if (!agendamento || agendamento.status === 'CANCELADO') return
-
-    const emailPaciente = agendamento.paciente.usuario.email
-    const nomeProfissional = agendamento.profissional.usuario.nome
-    const dataFormatada = new Date(agendamento.dataHora).toLocaleString('pt-BR')
-
-    const mensagens = {
-      '3_DIAS_ANTES':  `Lembrete: sua consulta com ${nomeProfissional} está em 3 dias — ${dataFormatada}.`,
-      '1_DIA_ANTES':   `Sua sessão é amanhã! ${nomeProfissional} às ${dataFormatada}. Confirme sua presença.`,
-      '2_HORAS_ANTES': `Sua consulta começa em 2 horas. ${nomeProfissional} — ${dataFormatada}.`
+  // Verifica se o agendamento ainda está ativo
+  const agendamento = await prisma.agendamento.findUnique({
+    where: { id: agendamentoId },
+    include: {
+      paciente:     { include: { usuario: true } },
+      profissional: { include: { usuario: true } }
     }
+  })
 
-    console.log(`[Job] Enviando ${tipo} para ${emailPaciente}: ${mensagens[tipo]}`)
-    // Em produção: chamar nodemailer/SendGrid aqui
+  if (!agendamento || agendamento.status === 'CANCELADO') return
 
-    await prisma.notificacao.create({
-      data: {
-        usuarioId:     agendamento.paciente.usuarioId,
-        agendamentoId: agendamento.id,
-        tipo,
-        canal:         'EMAIL',
-        status:        'ENVIADA',
-        agendadoPara:  new Date(),
-        enviadoEm:     new Date()
-      }
-    })
-  },
-  { connection: redisConnection }
-)
+  const emailPaciente = agendamento.paciente.usuario.email
+  const nomeProfissional = agendamento.profissional.usuario.nome
+  const dataFormatada = new Date(agendamento.dataHora).toLocaleString('pt-BR')
 
-worker.on('failed', (job, err) => {
-  console.error(`[Job falhou] ${job.id}:`, err.message)
-})
+  const mensagens = {
+    '3_DIAS_ANTES':  `Lembrete: sua consulta com ${nomeProfissional} está em 3 dias — ${dataFormatada}.`,
+    '1_DIA_ANTES':   `Sua sessão é amanhã! ${nomeProfissional} às ${dataFormatada}. Confirme sua presença.`,
+    '2_HORAS_ANTES': `Sua consulta começa em 2 horas. ${nomeProfissional} — ${dataFormatada}.`
+  }
+
+  console.log(`[Job] Enviando ${tipo} para ${emailPaciente}: ${mensagens[tipo]}`)
+  // Em produção: chamar nodemailer/SendGrid aqui
+
+  await prisma.notificacao.create({
+    data: {
+      usuarioId:     agendamento.paciente.usuarioId,
+      agendamentoId: agendamento.id,
+      tipo,
+      canal:         'EMAIL',
+      status:        'ENVIADA',
+      agendadoPara:  new Date(),
+      enviadoEm:     new Date()
+    }
+  })
+}
+
+const worker = filaAtiva
+  ? new Worker('notificacoes', processarLembrete, { connection: redisConnection })
+  : null
+
+if (worker) {
+  worker.on('failed', (job, err) => {
+    console.error(`[Job falhou] ${job.id}:`, err.message)
+  })
+}
 
 // ── Fecha fila e worker (usado pelos testes para encerrar o processo limpo) ──
 async function fecharNotificacoes() {
+  if (!filaAtiva) return
   // Espera o worker terminar de iniciar: fechar antes disso deixa um timer de 30 s
   // da BullMQ (checagem de jobs travados) segurando o processo.
   await worker.waitUntilReady()
