@@ -210,7 +210,7 @@ export default function ProntuariosPage() {
                       <p className={`text-xs font-medium truncate ${pacienteSelecionado?.id === p.id ? 'text-indigo-700' : 'text-gray-900'}`}>
                         {p.nome}
                       </p>
-                      <p className="text-xs text-gray-400">{p.sessoes} sessão{p.sessoes !== 1 ? 'ões' : ''}</p>
+                      <p className="text-xs text-gray-400">{p.sessoes} {p.sessoes === 1 ? 'sessão' : 'sessões'}</p>
                     </div>
                   </button>
                 ))}
@@ -245,13 +245,13 @@ export default function ProntuariosPage() {
                   <div className="flex-1 min-w-0">
                     <h2 className="text-sm font-medium text-gray-900">{pacienteSelecionado.nome}</h2>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      {pacienteSelecionado.sessoes} sessões · última em{' '}
+                      {pacienteSelecionado.sessoes} {pacienteSelecionado.sessoes === 1 ? 'sessão' : 'sessões'} · última em{' '}
                       {pacienteSelecionado.ultimaSessao ? formatarData(pacienteSelecionado.ultimaSessao) : '—'}
                     </p>
                   </div>
                   {semProntuario.length > 0 && (
                     <div className="w-full sm:w-auto sm:text-right">
-                      <p className="text-xs text-amber-600 mb-1">{semProntuario.length} sessão sem anotação</p>
+                      <p className="text-xs text-amber-600 mb-1">{semProntuario.length} {semProntuario.length === 1 ? 'sessão' : 'sessões'} sem anotação</p>
                       <button onClick={() => setAgendamentoModal(semProntuario[0])}
                         className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">
                         + Nova anotação

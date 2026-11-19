@@ -193,7 +193,7 @@ export default function FinanceiroPage() {
           <h2 className="text-sm font-medium text-gray-900">
             Sessões de {MESES[mesSelecionado]}
           </h2>
-          <span className="text-xs text-gray-400">{doMes.length} sessão{doMes.length !== 1 ? 'ões' : ''}</span>
+          <span className="text-xs text-gray-400">{doMes.length} {doMes.length === 1 ? 'sessão' : 'sessões'}</span>
         </div>
 
         {isLoading ? (
