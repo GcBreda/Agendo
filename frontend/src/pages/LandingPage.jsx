@@ -47,12 +47,13 @@ export default function LandingPage() {
             Já tenho conta
           </Link>
         </div>
-        {/* Celular: números em 2 × 2. A partir de 640 px, numa linha só, como antes. */}
-        <div className="grid grid-cols-2 gap-6 sm:flex sm:gap-10 justify-center mt-10 sm:mt-14 pt-8 sm:pt-10 border-t border-white border-opacity-20">
-          <div><p className="text-xl font-medium text-white">2.400+</p><p className="text-xs text-indigo-200 mt-1">pacientes ativos</p></div>
-          <div><p className="text-xl font-medium text-white">180</p><p className="text-xs text-indigo-200 mt-1">profissionais</p></div>
-          <div><p className="text-xl font-medium text-white">98%</p><p className="text-xs text-indigo-200 mt-1">satisfação</p></div>
-          <div><p className="text-xl font-medium text-white">4,9</p><p className="text-xs text-indigo-200 mt-1">avaliação média</p></div>
+        {/* Celular e tablet pequeno: números em 2 × 2. A partir de 768 px (md), numa linha só, como antes. */}
+        <div className="grid grid-cols-2 gap-6 md:flex md:gap-10 justify-center mt-10 sm:mt-14 pt-8 sm:pt-10 border-t border-white border-opacity-20">
+          {/* Só fatos que o sistema cumpre hoje (antes eram números inventados de pacientes e satisfação) */}
+          <div><p className="text-xl font-medium text-white">24 h</p><p className="text-xs text-indigo-200 mt-1">para agendar online</p></div>
+          <div><p className="text-xl font-medium text-white">50 min</p><p className="text-xs text-indigo-200 mt-1">por sessão</p></div>
+          <div><p className="text-xl font-medium text-white">5</p><p className="text-xs text-indigo-200 mt-1">modelos de documento CFP</p></div>
+          <div><p className="text-xl font-medium text-white">2</p><p className="text-xs text-indigo-200 mt-1">perfis: paciente e psicólogo</p></div>
         </div>
       </div>
 
@@ -145,7 +146,7 @@ export default function LandingPage() {
       <div className="px-4 sm:px-8 py-12 sm:py-16 bg-indigo-50 text-center">
         <p className="text-xs font-medium text-indigo-600 uppercase tracking-wider mb-2">Comece hoje</p>
         <h2 className="text-2xl font-medium text-gray-900 mb-2">Pronto para simplificar sua clínica?</h2>
-        <p className="text-sm text-gray-500 mb-7">Junte-se a mais de 180 profissionais que já usam o Agendô.</p>
+        <p className="text-sm text-gray-500 mb-7">Projeto acadêmico da UNISO, em teste com psicólogos.</p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link to="/cadastro" className="text-center px-6 py-3 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">Criar conta grátis</Link>
           <Link to="/login" className="text-center px-6 py-3 border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-100">Já tenho conta</Link>
