@@ -41,7 +41,8 @@ function ModalAnotacao({ agendamento, onClose, onSalvar }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 px-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-lg">
+      {/* max-h + rolagem: no celular (ou com o teclado aberto) a janela não passa da tela */}
+      <div className="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90dvh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="text-sm font-medium text-gray-900">Nova anotação</h2>
@@ -67,7 +68,7 @@ function ModalAnotacao({ agendamento, onClose, onSalvar }) {
               className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:border-indigo-500 focus:bg-white resize-none"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">CID (opcional)</label>
               <input
@@ -174,10 +175,12 @@ export default function ProntuariosPage() {
         />
       )}
 
-      <div className="flex gap-5 h-full">
+      {/* Celular (abaixo de 768 px): uma coisa por vez. Sem paciente escolhido, só a lista;
+          com paciente escolhido, só a ficha, com botão para voltar. A partir de md, lado a lado como antes. */}
+      <div className="md:flex gap-5 md:h-full">
 
         {/* Lista de pacientes */}
-        <div className="w-56 flex-shrink-0">
+        <div className={`w-full md:w-56 flex-shrink-0 ${pacienteSelecionado ? 'hidden md:block' : ''}`}>
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-100">
               <h2 className="text-sm font-medium text-gray-900 mb-2">Pacientes</h2>
@@ -207,7 +210,7 @@ export default function ProntuariosPage() {
                       <p className={`text-xs font-medium truncate ${pacienteSelecionado?.id === p.id ? 'text-indigo-700' : 'text-gray-900'}`}>
                         {p.nome}
                       </p>
-                      <p className="text-xs text-gray-400">{p.sessoes} sessão{p.sessoes !== 1 ? 'ões' : ''}</p>
+                      <p className="text-xs text-gray-400">{p.sessoes} {p.sessoes === 1 ? 'sessão' : 'sessões'}</p>
                     </div>
                   </button>
                 ))}
@@ -217,7 +220,7 @@ export default function ProntuariosPage() {
         </div>
 
         {/* Prontuário do paciente */}
-        <div className="flex-1 min-w-0">
+        <div className={`flex-1 min-w-0 ${pacienteSelecionado ? '' : 'hidden md:block'}`}>
           {!pacienteSelecionado ? (
             <div className="bg-white border border-gray-200 rounded-xl flex items-center justify-center h-64">
               <div className="text-center">
@@ -226,22 +229,29 @@ export default function ProntuariosPage() {
             </div>
           ) : (
             <>
-              {/* Cabeçalho do paciente */}
+              {/* Só no celular: volta para a lista (apenas limpa a seleção; nada é buscado nem gravado) */}
+              <button type="button" onClick={() => setPacienteSelecionado(null)}
+                aria-label="Voltar para a lista de pacientes"
+                className="md:hidden -ml-1 mb-2 px-1 py-2.5 text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                ← Pacientes
+              </button>
+
+              {/* Cabeçalho do paciente. No celular, o aviso e o botão de nova anotação descem para a linha de baixo. */}
               <div className="bg-white border border-gray-200 rounded-xl p-5 mb-4">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-700 text-base font-medium flex items-center justify-center flex-shrink-0">
                     {iniciais(pacienteSelecionado.nome)}
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <h2 className="text-sm font-medium text-gray-900">{pacienteSelecionado.nome}</h2>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      {pacienteSelecionado.sessoes} sessões · última em{' '}
+                      {pacienteSelecionado.sessoes} {pacienteSelecionado.sessoes === 1 ? 'sessão' : 'sessões'} · última em{' '}
                       {pacienteSelecionado.ultimaSessao ? formatarData(pacienteSelecionado.ultimaSessao) : '—'}
                     </p>
                   </div>
                   {semProntuario.length > 0 && (
-                    <div className="text-right">
-                      <p className="text-xs text-amber-600 mb-1">{semProntuario.length} sessão sem anotação</p>
+                    <div className="w-full sm:w-auto sm:text-right">
+                      <p className="text-xs text-amber-600 mb-1">{semProntuario.length} {semProntuario.length === 1 ? 'sessão' : 'sessões'} sem anotação</p>
                       <button onClick={() => setAgendamentoModal(semProntuario[0])}
                         className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">
                         + Nova anotação
@@ -274,8 +284,8 @@ export default function ProntuariosPage() {
                   <div className="divide-y divide-gray-100">
                     {prontuarios.map((pront, i) => (
                       <div key={pront.id} className="px-5 py-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                          <div className="flex flex-wrap items-center gap-2">
                             <span className="text-xs font-medium text-gray-500">
                               Sessão {prontuarios.length - i} · {formatarData(pront.criadoEm)}
                             </span>

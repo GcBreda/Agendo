@@ -13,6 +13,19 @@ const TIPOS_SESSAO = [
   { value: 'PSICANALISE',       label: 'Psicanálise' }
 ]
 
+// Abre o calendário ao clicar em qualquer parte do campo, e não só no ícone.
+// showPicker existe nos navegadores atuais; nos antigos, o campo funciona como antes.
+function abrirCalendario(e) {
+  try { e.currentTarget.showPicker?.() } catch { /* sem suporte: comportamento padrão */ }
+}
+
+// Data de hoje no fuso de quem usa. toISOString() daria a data em UTC,
+// que depois das 21h em Brasília já é o dia seguinte.
+function hojeLocal() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export default function AgendarPage() {
   const navigate = useNavigate()
   const [etapa,        setEtapa]        = useState(1)
@@ -114,10 +127,11 @@ export default function AgendarPage() {
         <div className="bg-white border border-gray-200 rounded-xl p-5">
           <h2 className="text-sm font-medium text-gray-900 mb-4">Escolha a data e o horário</h2>
           <div className="mb-4">
-            <label className="block text-xs font-medium text-gray-500 mb-1">Data</label>
-            <input type="date" value={data} min={new Date().toISOString().split('T')[0]}
+            <label htmlFor="data-consulta" className="block text-xs font-medium text-gray-500 mb-1">Data</label>
+            <input id="data-consulta" type="date" value={data} min={hojeLocal()}
+              onClick={abrirCalendario}
               onChange={e => { setData(e.target.value); setHorario('') }}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"/>
+              className="w-full cursor-pointer border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"/>
           </div>
           {data && (
             <div className="mb-4">

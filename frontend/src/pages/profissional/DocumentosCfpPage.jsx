@@ -180,7 +180,8 @@ function DocumentosCfpPage() {
   return (
     <DashboardLayout titulo="Documentos Psicológicos CFP">
 
-      <div className="bg-indigo-600 rounded-xl px-6 py-5 flex items-start justify-between">
+      {/* Celular: o botão da Resolução desce para baixo do texto, em vez de espremer o título */}
+      <div className="bg-indigo-600 rounded-xl px-6 py-5 flex flex-col sm:flex-row items-start sm:justify-between gap-4">
         <div>
           <h2 className="text-base font-medium text-white mb-1">
             Documentos Psicológicos — Como Elaborar
@@ -200,7 +201,8 @@ function DocumentosCfpPage() {
         </a>
       </div>
 
-      <div className="grid grid-cols-5 gap-3">
+      {/* 2 colunas no celular, 3 a partir de 640 px, 5 a partir de 1024 px */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {DOCUMENTOS.map(function(d) {
           const c = COR[d.cor]
           return (
