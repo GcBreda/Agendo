@@ -242,8 +242,9 @@ export default function ProntuariosPage() {
                   <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-700 text-base font-medium flex items-center justify-center flex-shrink-0">
                     {iniciais(pacienteSelecionado.nome)}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h2 className="text-sm font-medium text-gray-900">{pacienteSelecionado.nome}</h2>
+                  {/* base de 10rem: com a letra maior, o bloco da direita desce em vez de espremer o nome */}
+                  <div className="min-w-0 flex-[1_1_10rem]">
+                    <h2 className="text-sm font-medium text-gray-900 break-words">{pacienteSelecionado.nome}</h2>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {pacienteSelecionado.sessoes} {pacienteSelecionado.sessoes === 1 ? 'sessão' : 'sessões'} · última em{' '}
                       {pacienteSelecionado.ultimaSessao ? formatarData(pacienteSelecionado.ultimaSessao) : '—'}

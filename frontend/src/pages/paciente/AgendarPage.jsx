@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { profissionalService } from '../../services/api'
 import { useHorariosDisponiveis, useCriarAgendamento } from '../../hooks/useAgendamentos'
 import DashboardLayout from '../../components/layout/DashboardLayout'
+import { useTamanhoLetra, PADRAO } from '../../context/TamanhoLetraContext'
 
 const TIPOS_SESSAO = [
   { value: 'AVALIACAO_INICIAL', label: 'Avaliação inicial' },
@@ -29,6 +30,7 @@ function hojeLocal() {
 export default function AgendarPage() {
   const navigate = useNavigate()
   const [etapa,        setEtapa]        = useState(1)
+  const passosCompactos = useTamanhoLetra().nivel > PADRAO
   const [profissional, setProfissional] = useState(null)
   const [data,         setData]         = useState('')
   const [horario,      setHorario]      = useState('')
@@ -79,14 +81,17 @@ export default function AgendarPage() {
 
   return (
     <DashboardLayout titulo="Agendar consulta">
+      {/* Com a letra maior que o padrão, no celular os três nomes não cabem na linha:
+          aparece só o do passo atual (os outros continuam lidos pelo leitor de tela). */}
       <div className="flex items-center gap-2">
         {[1,2,3].map(n => (
-          <div key={n} className="flex items-center gap-2 flex-1">
+          <div key={n} className={`flex items-center gap-2 ${passosCompactos ? 'flex-auto sm:flex-1' : 'flex-1'}`}>
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0
               ${n <= etapa ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
               {n < etapa ? '✓' : n}
             </div>
-            <span className={`text-xs ${n === etapa ? 'text-indigo-600 font-medium' : 'text-gray-400'}`}>
+            <span className={`text-xs ${n === etapa ? 'text-indigo-600 font-medium' : 'text-gray-400'}
+              ${passosCompactos && n !== etapa ? 'sr-only sm:not-sr-only' : ''}`}>
               {n === 1 ? 'Profissional' : n === 2 ? 'Horário' : 'Confirmação'}
             </span>
             {n < 3 && <div className={`flex-1 h-px ${n < etapa ? 'bg-indigo-300' : 'bg-gray-200'}`}/>}

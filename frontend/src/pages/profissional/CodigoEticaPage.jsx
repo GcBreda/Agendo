@@ -195,8 +195,9 @@ function CodigoEticaPage() {
   return (
     <DashboardLayout titulo="Código de Ética CFP">
 
-      <div className="bg-indigo-600 rounded-xl p-5 flex items-start justify-between">
-        <div>
+      {/* flex-wrap: com a letra maior, o botão do PDF desce para baixo do texto */}
+      <div className="bg-indigo-600 rounded-xl p-5 flex flex-wrap items-start justify-between gap-y-3">
+        <div className="min-w-0 flex-[1_1_9rem]">
           <h2 className="text-base font-medium text-white mb-1">
             Código de Ética Profissional do Psicólogo
           </h2>

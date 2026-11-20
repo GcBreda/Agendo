@@ -8,7 +8,8 @@ export default function LandingPage() {
 
       {/* Navbar */}
       {/* Celular: só logo, Entrar e Criar conta. "Funcionalidades" e "Planos" aparecem a partir de 640 px (sm). */}
-      <nav className="border-b border-gray-100 px-4 sm:px-8 h-14 flex items-center justify-between gap-3">
+      {/* flex-wrap: com a letra maior, os botões descem para uma segunda linha em vez de sair da tela */}
+      <nav className="border-b border-gray-100 px-4 sm:px-8 min-h-14 py-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div className="flex items-center gap-2 flex-shrink-0">
           <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
             <svg className="w-4 h-4 text-white" viewBox="0 0 16 16" fill="none">
@@ -18,7 +19,7 @@ export default function LandingPage() {
           </div>
           <span className="text-base font-medium text-gray-900">Agend<span className="text-indigo-600">ô</span></span>
         </div>
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="ml-auto flex items-center gap-2 sm:gap-4">
           <span className="hidden sm:inline text-sm text-gray-500 cursor-pointer hover:text-gray-800">Funcionalidades</span>
           <span className="hidden sm:inline text-sm text-gray-500 cursor-pointer hover:text-gray-800">Planos</span>
           {/* Tema: no celular, um botão só (claro/escuro); a partir de 640 px, as três opções */}

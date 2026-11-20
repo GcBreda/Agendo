@@ -44,7 +44,7 @@ function ModalPaciente({ paciente, agendamentos, onClose }) {
             {iniciais(paciente.nome)}
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-sm font-medium text-gray-900">{paciente.nome}</h2>
+            <h2 className="text-sm font-medium text-gray-900 break-words">{paciente.nome}</h2>
             <p className="text-xs text-gray-400 mt-0.5 break-words">{paciente.email}</p>
             <div className="flex gap-2 mt-2">
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
@@ -63,7 +63,8 @@ function ModalPaciente({ paciente, agendamentos, onClose }) {
         </div>
 
         {/* Métricas */}
-        <div className="grid grid-cols-3 gap-3 px-6 py-4 border-b border-gray-100">
+        {/* Colunas de no mínimo 4,5rem: com a letra maior, "Canceladas" desce para a linha de baixo */}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,4.5rem),1fr))] gap-3 px-6 py-4 border-b border-gray-100">
           <div className="text-center">
             <p className="text-lg font-semibold text-gray-900">{sessoes.length}</p>
             <p className="text-xs text-gray-400">Total</p>
@@ -96,7 +97,8 @@ function ModalPaciente({ paciente, agendamentos, onClose }) {
           ) : (
             <div className="space-y-2">
               {sessoes.map(ag => (
-                <div key={ag.id} className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
+                // flex-wrap: com a letra maior, a etiqueta de status desce para a linha de baixo
+                <div key={ag.id} className="flex flex-wrap items-center gap-3 py-2 border-b border-gray-100 last:border-0">
                   <div className="w-10 text-center flex-shrink-0">
                     <p className="text-xs font-medium text-gray-900">{new Date(ag.dataHora).getDate()}</p>
                     <p className="text-xs text-gray-400">
@@ -108,11 +110,11 @@ function ModalPaciente({ paciente, agendamentos, onClose }) {
                     ag.status === 'CONFIRMADO' ? 'bg-indigo-400' :
                     ag.status === 'CANCELADO'  ? 'bg-red-300' : 'bg-amber-400'
                   }`}/>
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-[1_1_7rem]">
                     <p className="text-xs font-medium text-gray-800">{TIPO_LABEL[ag.tipoSessao]}</p>
                     <p className="text-xs text-gray-400">{formatarHora(ag.dataHora)}</p>
                   </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                  <span className={`ml-auto text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
                     ag.status === 'REALIZADO'  ? 'bg-green-50 text-green-700' :
                     ag.status === 'CONFIRMADO' ? 'bg-indigo-50 text-indigo-700' :
                     ag.status === 'CANCELADO'  ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-700'

@@ -161,7 +161,9 @@ export default function CadastroPage() {
         {etapa === 1 && (
           <div className="space-y-4">
             <p className="text-sm text-gray-600 text-center mb-4">Você é...</p>
-            <div className="grid grid-cols-2 gap-3">
+            {/* Duas colunas de no mínimo 7,5rem. Como rem cresce com a letra, com a letra maior
+                os dois cartões ficam um embaixo do outro, em vez de o texto sair do cartão. */}
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,7.5rem),1fr))] gap-3">
               {[
                 { value: 'PACIENTE',      label: 'Paciente',      sub: 'Quero agendar consultas', icon: '👤' },
                 { value: 'PROFISSIONAL',  label: 'Profissional',  sub: 'Psicólogo ou psiquiatra',  icon: '📋' },

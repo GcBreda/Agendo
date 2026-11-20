@@ -30,12 +30,14 @@ function SectionCard({ title, children }) {
 
 function Row({ label, sub, children }) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-      <div>
+    // flex-wrap + texto com base de 9rem: com a letra maior, o botão desce para baixo do texto
+    // em vez de empurrar a linha para fora da tela. No tamanho padrão, nada muda.
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 border-b border-gray-100 last:border-0">
+      <div className="min-w-0 flex-[1_1_9rem]">
         <p className="text-sm font-medium text-gray-800">{label}</p>
         {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
       </div>
-      <div className="ml-4 flex-shrink-0">{children}</div>
+      <div className="flex-shrink-0">{children}</div>
     </div>
   )
 }
