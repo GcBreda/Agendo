@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import TemaSwitch from '../TemaSwitch'
 import TamanhoLetraControle from '../TamanhoLetraControle'
+import TutorialComoUsar, { IconeAjuda } from '../TutorialComoUsar'
 
 const navPaciente = [
   { path: '/paciente',           label: 'Início',           icon: GridIcon },
@@ -49,6 +50,18 @@ export default function DashboardLayout({ children, titulo }) {
     document.addEventListener('keydown', aoApertarTecla)
     return () => document.removeEventListener('keydown', aoApertarTecla)
   }, [menuAberto])
+
+  // Guia "Como usar": abre sozinho na primeira vez de cada perfil neste navegador e pelo botão "?".
+  // A marca de "já viu" é por perfil (paciente ou profissional), e não por pessoa: assim o navegador
+  // não guarda a lista de quem já entrou nele (importa em computador compartilhado).
+  const chaveGuia = isPaciente ? 'agendo_tutorial_visto_paciente' : 'agendo_tutorial_visto_profissional'
+  const [guiaAberto, setGuiaAberto] = useState(() => !jaViuGuia(chaveGuia))
+  const botaoAjudaRef = useRef(null)
+
+  function fecharGuia() {
+    setGuiaAberto(false)
+    try { localStorage.setItem(chaveGuia, '1') } catch { /* sem armazenamento: abre de novo na próxima entrada */ }
+  }
 
   async function handleLogout() {
     await logout()
@@ -159,14 +172,34 @@ export default function DashboardLayout({ children, titulo }) {
             </p>
             <div className="hidden sm:block"><TamanhoLetraControle /></div>
             <TemaSwitch />
+            <button
+              ref={botaoAjudaRef}
+              type="button"
+              onClick={() => setGuiaAberto(true)}
+              aria-label="Como usar o Agendô"
+              title="Como usar o Agendô"
+              aria-haspopup="dialog"
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+            >
+              <IconeAjuda className="w-[1.125rem] h-[1.125rem]" />
+            </button>
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-4 lg:p-5 flex flex-col gap-4">
           {children}
         </main>
       </div>
+
+      {guiaAberto && (
+        <TutorialComoUsar perfil={usuario?.perfil} aoFechar={fecharGuia} devolverFocoPara={botaoAjudaRef} />
+      )}
     </div>
   )
+}
+
+// Sem acesso ao armazenamento do navegador, conta como "já viu": melhor do que abrir em toda tela
+function jaViuGuia(chave) {
+  try { return localStorage.getItem(chave) === '1' } catch { return true }
 }
 
 function GridIcon({ className }) {

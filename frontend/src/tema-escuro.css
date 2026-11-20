@@ -147,6 +147,10 @@ html.dark .bg-blue-50  { background-color: rgb(59 130 246 / .12); }
 html.dark .bg-blue-100 { background-color: rgb(59 130 246 / .2); }
 html.dark .text-blue-700 { color: rgb(147 197 253 / var(--tw-text-opacity, 1)); }
 
+/* ── Anel de foco com espaço (ring-offset, no botão principal do guia "Como usar") ──
+   O espaço entre o botão e o anel é branco por padrão; no escuro, fica da cor do cartão. */
+html.dark .focus-visible\:ring-offset-2:focus-visible { --tw-ring-offset-color: rgb(var(--superficie)); }
+
 /* Ficam iguais nos dois temas, de propósito: text-white, bg-black (fundo de janela), os índigos fortes
    (400 a 700), os verdes, vermelhos e âmbares fortes (400 a 700) e os textos índigo 100 e 200,
    que só aparecem sobre fundo índigo. */
