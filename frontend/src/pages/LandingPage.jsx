@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import TemaSwitch from '../components/TemaSwitch'
 
 export default function LandingPage() {
   return (
@@ -20,8 +21,11 @@ export default function LandingPage() {
         <div className="flex items-center gap-2 sm:gap-4">
           <span className="hidden sm:inline text-sm text-gray-500 cursor-pointer hover:text-gray-800">Funcionalidades</span>
           <span className="hidden sm:inline text-sm text-gray-500 cursor-pointer hover:text-gray-800">Planos</span>
-          <Link to="/login" className="whitespace-nowrap text-sm text-gray-700 border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50">Entrar</Link>
-          <Link to="/cadastro" className="whitespace-nowrap text-sm text-white bg-indigo-600 px-4 py-2 rounded-lg hover:bg-indigo-700">Criar conta</Link>
+          {/* Tema: no celular, um botão só (claro/escuro); a partir de 640 px, as três opções */}
+          <span className="sm:hidden"><TemaSwitch compacto /></span>
+          <span className="hidden sm:block"><TemaSwitch /></span>
+          <Link to="/login" className="whitespace-nowrap text-sm text-gray-700 border border-gray-200 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-50">Entrar</Link>
+          <Link to="/cadastro" className="whitespace-nowrap text-sm text-white bg-indigo-600 px-3 sm:px-4 py-2 rounded-lg hover:bg-indigo-700">Criar conta</Link>
         </div>
       </nav>
 

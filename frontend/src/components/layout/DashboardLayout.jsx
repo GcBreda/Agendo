@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import TemaSwitch from '../TemaSwitch'
 
 const navPaciente = [
   { path: '/paciente',           label: 'Início',           icon: GridIcon },
@@ -146,9 +147,12 @@ export default function DashboardLayout({ children, titulo }) {
             </button>
             <h1 className="text-sm font-medium text-gray-900 truncate">{titulo}</h1>
           </div>
-          <p className="hidden lg:block text-xs text-gray-400">
-            {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
-          </p>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <p className="hidden lg:block text-xs text-gray-400">
+              {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
+            </p>
+            <TemaSwitch />
+          </div>
         </header>
         <main className="flex-1 overflow-y-auto p-4 lg:p-5 flex flex-col gap-4">
           {children}
