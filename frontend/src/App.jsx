@@ -7,7 +7,9 @@
   import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
   import { AuthProvider, useAuth } from './context/AuthContext'
   import { TemaProvider } from './context/TemaContext'
+  import { TamanhoLetraProvider } from './context/TamanhoLetraContext'
   import TemaSwitch from './components/TemaSwitch'
+  import TamanhoLetraControle from './components/TamanhoLetraControle'
 
   import LandingPage        from './pages/LandingPage'
   import LoginPage          from './pages/auth/LoginPage'
@@ -49,22 +51,28 @@ function RotaPublica({ children }) {
 }
 
 // Telas sem cabeçalho próprio (entrar, cadastro, recuperar senha, página não encontrada):
-// o botão de tema fica no canto de cima. As outras têm o botão no próprio topo.
-function TemaNasTelasDeEntrada() {
+// o tamanho da letra e o tema ficam no canto de cima. As outras têm os botões no próprio topo.
+function AjustesNasTelasDeEntrada() {
   const { pathname } = useLocation()
   const temTopoProprio = pathname === '/' || pathname.startsWith('/paciente') ||
     pathname.startsWith('/profissional') || pathname.startsWith('/configuracoes')
   if (temTopoProprio) return null
-  return <div className="absolute top-3 right-3 z-10"><TemaSwitch /></div>
+  return (
+    <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+      <TamanhoLetraControle />
+      <TemaSwitch />
+    </div>
+  )
 }
 
 export default function App() {
   return (
     <TemaProvider>
+    <TamanhoLetraProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrowserRouter>
-          <TemaNasTelasDeEntrada />
+          <AjustesNasTelasDeEntrada />
           <Routes>
 
             <Route path="/" element={<LandingPage />} />
@@ -94,6 +102,7 @@ export default function App() {
         </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>
+    </TamanhoLetraProvider>
     </TemaProvider>
   )
 }   

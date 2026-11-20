@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import TemaSwitch from '../TemaSwitch'
+import TamanhoLetraControle from '../TamanhoLetraControle'
 
 const navPaciente = [
   { path: '/paciente',           label: 'Início',           icon: GridIcon },
@@ -109,6 +110,11 @@ export default function DashboardLayout({ children, titulo }) {
         </nav>
 
         <div className="border-t border-gray-100 px-3 py-3">
+          {/* Celular (abaixo de 640 px): o tamanho da letra fica aqui, porque no topo não cabe */}
+          <div className="sm:hidden mb-3">
+            <p className="text-xs text-gray-500 mb-1.5">Tamanho da letra</p>
+            <TamanhoLetraControle largo />
+          </div>
           <div className="flex items-center gap-2.5 mb-2">
             <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium flex items-center justify-center flex-shrink-0">
               {iniciais}
@@ -130,7 +136,7 @@ export default function DashboardLayout({ children, titulo }) {
       </aside>
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-gray-100 px-6 h-12 flex items-center justify-between gap-3 flex-shrink-0">
+        <header className="bg-white border-b border-gray-100 px-4 sm:px-6 h-12 flex items-center justify-between gap-3 flex-shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <button
               ref={botaoMenuRef}
@@ -147,10 +153,11 @@ export default function DashboardLayout({ children, titulo }) {
             </button>
             <h1 className="text-sm font-medium text-gray-900 truncate">{titulo}</h1>
           </div>
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <p className="hidden lg:block text-xs text-gray-400">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <p className="hidden lg:block text-xs text-gray-400 mr-1">
               {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
             </p>
+            <div className="hidden sm:block"><TamanhoLetraControle /></div>
             <TemaSwitch />
           </div>
         </header>
