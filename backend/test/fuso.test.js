@@ -4,7 +4,7 @@
 
 const { test, describe } = require('node:test')
 const assert = require('node:assert/strict')
-const { instanteBrasilia, diaDaSemana, limitesDoDia, horaBrasilia } = require('../src/utils/fuso')
+const { instanteBrasilia, diaDaSemana, limitesDoDia, horaBrasilia, dataBrasilia } = require('../src/utils/fuso')
 
 describe('horário de Brasília na agenda', () => {
   test('horário sem fuso vindo do site é lido como Brasília', () => {
@@ -38,5 +38,11 @@ describe('horário de Brasília na agenda', () => {
     assert.equal(horaBrasilia(instanteBrasilia('2026-11-20T13:50')), '13:50')
     assert.equal(horaBrasilia(new Date('2026-11-21T02:30:00Z')), '23:30')
     assert.equal(horaBrasilia(new Date('2026-11-20T03:05:00Z')), '00:05')
+  })
+
+  test('data de um instante sai em Brasília, mesmo perto da meia-noite', () => {
+    assert.equal(dataBrasilia(new Date('2026-11-21T02:30:00Z')), '2026-11-20') // 23:30 do dia 20 em Brasília
+    assert.equal(dataBrasilia(new Date('2026-11-21T03:00:00Z')), '2026-11-21') // 00:00 do dia 21
+    assert.equal(dataBrasilia(instanteBrasilia('2026-11-24T09:00')), '2026-11-24')
   })
 })

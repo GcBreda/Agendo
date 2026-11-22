@@ -29,4 +29,9 @@ function horaBrasilia(instante) {
   return new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(instante)
 }
 
-module.exports = { FUSO, instanteBrasilia, diaDaSemana, limitesDoDia, horaBrasilia }
+// 'AAAA-MM-DD' de um instante, em Brasília (o formato en-CA já sai nessa ordem).
+function dataBrasilia(instante) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: FUSO, year: 'numeric', month: '2-digit', day: '2-digit' }).format(instante)
+}
+
+module.exports = { FUSO, instanteBrasilia, diaDaSemana, limitesDoDia, horaBrasilia, dataBrasilia }

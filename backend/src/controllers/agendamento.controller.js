@@ -1,7 +1,32 @@
 // backend/src/controllers/agendamento.controller.js
 const { prisma }  = require('../prisma/client')
 const { agendarNotificacoes } = require('../jobs/notificacao.job')
-const { instanteBrasilia, diaDaSemana, limitesDoDia, horaBrasilia } = require('../utils/fuso')
+const { instanteBrasilia, diaDaSemana, limitesDoDia, horaBrasilia, dataBrasilia } = require('../utils/fuso')
+const { DIAS_SEMANA, horariosDoDia, conferirNovaConsulta } = require('../utils/agenda')
+
+// Consultas que ocupam horário na agenda
+const STATUS_QUE_OCUPAM = ['PENDENTE', 'CONFIRMADO']
+
+// Faixas de atendimento do profissional num dia 'AAAA-MM-DD' e as consultas já marcadas nele
+// (cada uma com a própria duração, para conferir sobreposição).
+async function agendaDoDia(profissional, data) {
+  const diaSemana = DIAS_SEMANA[diaDaSemana(data)]
+  const faixas = profissional.disponibilidades.filter(d => d.diaSemana === diaSemana && d.ativo)
+  const marcadas = await prisma.agendamento.findMany({
+    where: {
+      profissionalId: profissional.id,
+      dataHora: limitesDoDia(data),
+      status: { in: STATUS_QUE_OCUPAM }
+    },
+    select: { dataHora: true, duracaoMin: true }
+  })
+  return {
+    faixas,
+    duracaoMin: profissional.duracaoPadrao,
+    intervaloMin: profissional.intervaloMin ?? 0,
+    ocupadas: marcadas.map(a => ({ inicio: horaBrasilia(a.dataHora), duracaoMin: a.duracaoMin }))
+  }
+}
 
 // ── GET /api/agendamentos/disponiveis ────────────────────────
 // Query: profissionalId, data (YYYY-MM-DD)
@@ -20,35 +45,11 @@ async function horariosDisponiveis(req, res, next) {
       include: { disponibilidades: true }
     })
     if (!profissional) return res.status(404).json({ error: 'Profissional não encontrado.' })
+    if (!profissional.ativo) return res.json({ horarios: [] })
 
-    const diaSemana = ['DOMINGO','SEGUNDA','TERCA','QUARTA','QUINTA','SEXTA','SABADO'][diaDaSemana(data)]
-
-    const disponibilidade = profissional.disponibilidades.find(
-      d => d.diaSemana === diaSemana && d.ativo
-    )
-    if (!disponibilidade) return res.json({ horarios: [] })
-
-    // Gera slots de 50 min dentro do intervalo disponível
-    const slots     = gerarSlots(disponibilidade.horaInicio, disponibilidade.horaFim, profissional.duracaoPadrao)
-    const ocupados  = await prisma.agendamento.findMany({
-      where: {
-        profissionalId,
-        dataHora: limitesDoDia(data),
-        status: { in: ['PENDENTE', 'CONFIRMADO'] }
-      },
-      select: { dataHora: true }
-    })
-
-    const horariosOcupados = new Set(
-      ocupados.map(a => horaBrasilia(a.dataHora))
-    )
-
-    const horarios = slots.map(slot => ({
-      hora: slot,
-      disponivel: !horariosOcupados.has(slot)
-    }))
-
-    res.json({ horarios })
+    // Todas as faixas do dia, com a duração e o intervalo escolhidos pelo profissional
+    // (utils/agenda.js); ocupado = encosta em alguma consulta já marcada.
+    res.json({ horarios: horariosDoDia(await agendaDoDia(profissional, data)) })
   } catch (err) {
     next(err)
   }
@@ -75,15 +76,26 @@ async function criar(req, res, next) {
       return res.status(400).json({ error: 'Não é possível agendar em data ou horário passado.' })
     }
 
-    // Verifica conflito de horário (lock pelo banco)
-    const conflito = await prisma.agendamento.findFirst({
-      where: {
-        profissionalId,
-        dataHora: instante,
-        status: { in: ['PENDENTE', 'CONFIRMADO'] }
-      }
+    const profissional = await prisma.profissional.findUnique({
+      where: { id: profissionalId },
+      include: { disponibilidades: true }
     })
-    if (conflito) return res.status(409).json({ error: 'Horário já ocupado.' })
+    if (!profissional || !profissional.ativo) {
+      return res.status(404).json({ error: 'Profissional não encontrado.' })
+    }
+
+    // O servidor confere o horário de novo: o que vem do site não é confiável.
+    // Precisa ser um horário da grade do profissional (minuto cheio) e não pode encostar em outra consulta.
+    // Falta ainda uma trava no próprio banco para dois pedidos no mesmo instante (outra migration, a aprovar).
+    const data = dataBrasilia(instante)
+    const minutoCheio = instante.getUTCSeconds() === 0 && instante.getUTCMilliseconds() === 0
+    const motivo = minutoCheio
+      ? conferirNovaConsulta({ hora: horaBrasilia(instante), ...(await agendaDoDia(profissional, data)) })
+      : 'FORA_DA_AGENDA'
+    if (motivo === 'FORA_DA_AGENDA') {
+      return res.status(400).json({ error: 'Esse horário não está na agenda do profissional.' })
+    }
+    if (motivo === 'OCUPADO') return res.status(409).json({ error: 'Horário já ocupado.' })
 
     const agendamento = await prisma.agendamento.create({
       data: {
@@ -91,6 +103,7 @@ async function criar(req, res, next) {
         profissionalId,
         pagamentoId:   pagamentoId || null,
         dataHora:      instante,
+        duracaoMin:    profissional.duracaoPadrao,
         tipoSessao:    tipoSessao.toUpperCase(),
         observacoes,
         status:        pagamentoId ? 'CONFIRMADO' : 'PENDENTE'
@@ -203,22 +216,6 @@ async function realizar(req, res, next) {
   } catch (err) {
     next(err)
   }
-}
-
-// ── Helpers ──────────────────────────────────────────────────
-function gerarSlots(inicio, fim, duracaoMin) {
-  const slots  = []
-  let [h, m]   = inicio.split(':').map(Number)
-  const [fh, fm] = fim.split(':').map(Number)
-  const fimMin = fh * 60 + fm
-
-  while (h * 60 + m + duracaoMin <= fimMin) {
-    slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`)
-    m += duracaoMin
-    if (m >= 60) { h += Math.floor(m / 60); m = m % 60 }
-  }
-
-  return slots
 }
 
 module.exports = { horariosDisponiveis, criar, listar, cancelar, realizar }
