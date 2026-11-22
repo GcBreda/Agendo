@@ -15,6 +15,7 @@ const navPaciente = [
 const navProfissional = [
   { path: '/profissional',              label: 'Visão geral',    icon: GridIcon },
   { path: '/profissional/agenda',       label: 'Agenda',         icon: CalIcon },
+  { path: '/profissional/horarios',     label: 'Meus horários',  icon: ClockIcon },
   { path: '/profissional/pacientes',    label: 'Pacientes',      icon: UsersIcon },
   { path: '/profissional/prontuarios',  label: 'Prontuários',    icon: DocIcon },
   { path: '/profissional/financeiro',   label: 'Financeiro',     icon: CardIcon },

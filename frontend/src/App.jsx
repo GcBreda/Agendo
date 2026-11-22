@@ -23,6 +23,7 @@
 
   import ProfissionalDashboard  from './pages/profissional/DashboardPage'
   import ProfissionalAgenda     from './pages/profissional/AgendaPage'
+  import ProfissionalHorarios   from './pages/profissional/HorariosPage'
   import ProfissionalPacientes  from './pages/profissional/PacientesPage'
   import ProfissionalProntuario from './pages/profissional/ProntuariosPage'
   import ProfissionalFinanceiro from './pages/profissional/FinanceiroPage'
@@ -88,6 +89,7 @@ export default function App() {
             <Route path="/profissional" element={<RotaProtegida perfil="PROFISSIONAL"><ProfissionalDashboard /></RotaProtegida>} />
             <Route path="/profissional/codigo-etica" element={<RotaProtegida perfil="PROFISSIONAL"><CodigoEticaPage /></RotaProtegida>} />
             <Route path="/profissional/agenda"      element={<RotaProtegida perfil="PROFISSIONAL"><ProfissionalAgenda /></RotaProtegida>} />
+            <Route path="/profissional/horarios"    element={<RotaProtegida perfil="PROFISSIONAL"><ProfissionalHorarios /></RotaProtegida>} />
             <Route path="/profissional/pacientes"   element={<RotaProtegida perfil="PROFISSIONAL"><ProfissionalPacientes /></RotaProtegida>} />
             <Route path="/profissional/prontuarios/:pacienteId?" element={<RotaProtegida perfil="PROFISSIONAL"><ProfissionalProntuario /></RotaProtegida>} />
             <Route path="/profissional/financeiro"  element={<RotaProtegida perfil="PROFISSIONAL"><ProfissionalFinanceiro /></RotaProtegida>} />

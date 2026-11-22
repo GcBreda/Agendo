@@ -98,5 +98,8 @@ export const prontuarioService = {
 
 export const profissionalService = {
   listar:       (filtros) => api.get('/profissionais', { params: filtros }),
-  buscarPorId:  (id)      => api.get(`/profissionais/${id}`)
+  buscarPorId:  (id)      => api.get(`/profissionais/${id}`),
+  // "Meus horários" do profissional logado (o servidor sabe quem é pelo token)
+  meusHorarios:       ()      => api.get('/profissionais/me/horarios'),
+  salvarMeusHorarios: (dados) => api.put('/profissionais/me/horarios', dados)
 }

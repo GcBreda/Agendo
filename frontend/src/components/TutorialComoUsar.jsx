@@ -78,6 +78,7 @@ const PASSOS = {
       corpo: <>
         <p>A <R>Visão geral</R> mostra as consultas de hoje e as próximas.</p>
         <p>Na <R>Agenda</R>, use <R>‹</R> e <R>›</R> para trocar de semana e <R>Hoje</R> para voltar. Depois do horário da sessão, marque <R>Realizada</R>. Se ela não for acontecer, clique em <R>Cancelar</R>.</p>
+        <p>Em <R>Meus horários</R>, escolha os dias e as faixas em que atende, a duração da consulta e o intervalo. Os pacientes só marcam nesses horários.</p>
         <LegendaStatus />
       </>
     },
