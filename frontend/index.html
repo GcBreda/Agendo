@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Agendô</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>
+      // Aplica o tema e o tamanho da letra antes da primeira pintura: a tela não pisca clara no tema escuro
+      // nem "pula" de tamanho. Mesmas regras do TemaContext e do TamanhoLetraContext.
+      (function () {
+        try {
+          var escolha = localStorage.getItem('agendo_tema')
+          var escuro = escolha === 'escuro' ||
+            (escolha !== 'claro' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          if (escuro) document.documentElement.classList.add('dark')
+
+          // Só valores da lista (o que vem do armazenamento não entra no estilo sem conferir)
+          var nivel = Number(localStorage.getItem('agendo_tamanho_letra'))
+          if ([87.5, 112.5, 125].indexOf(nivel) !== -1) {
+            document.documentElement.style.fontSize = nivel + '%'
+          }
+        } catch (e) { /* sem armazenamento: os contextos decidem quando carregar */ }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

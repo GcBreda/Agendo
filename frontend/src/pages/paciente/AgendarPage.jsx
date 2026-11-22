@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { profissionalService } from '../../services/api'
 import { useHorariosDisponiveis, useCriarAgendamento } from '../../hooks/useAgendamentos'
 import DashboardLayout from '../../components/layout/DashboardLayout'
+import { useTamanhoLetra, PADRAO } from '../../context/TamanhoLetraContext'
 
 const TIPOS_SESSAO = [
   { value: 'AVALIACAO_INICIAL', label: 'Avaliação inicial' },
@@ -13,9 +14,23 @@ const TIPOS_SESSAO = [
   { value: 'PSICANALISE',       label: 'Psicanálise' }
 ]
 
+// Abre o calendário ao clicar em qualquer parte do campo, e não só no ícone.
+// showPicker existe nos navegadores atuais; nos antigos, o campo funciona como antes.
+function abrirCalendario(e) {
+  try { e.currentTarget.showPicker?.() } catch { /* sem suporte: comportamento padrão */ }
+}
+
+// Data de hoje no fuso de quem usa. toISOString() daria a data em UTC,
+// que depois das 21h em Brasília já é o dia seguinte.
+function hojeLocal() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export default function AgendarPage() {
   const navigate = useNavigate()
   const [etapa,        setEtapa]        = useState(1)
+  const passosCompactos = useTamanhoLetra().nivel > PADRAO
   const [profissional, setProfissional] = useState(null)
   const [data,         setData]         = useState('')
   const [horario,      setHorario]      = useState('')
@@ -66,14 +81,17 @@ export default function AgendarPage() {
 
   return (
     <DashboardLayout titulo="Agendar consulta">
+      {/* Com a letra maior que o padrão, no celular os três nomes não cabem na linha:
+          aparece só o do passo atual (os outros continuam lidos pelo leitor de tela). */}
       <div className="flex items-center gap-2">
         {[1,2,3].map(n => (
-          <div key={n} className="flex items-center gap-2 flex-1">
+          <div key={n} className={`flex items-center gap-2 ${passosCompactos ? 'flex-auto sm:flex-1' : 'flex-1'}`}>
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0
               ${n <= etapa ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
               {n < etapa ? '✓' : n}
             </div>
-            <span className={`text-xs ${n === etapa ? 'text-indigo-600 font-medium' : 'text-gray-400'}`}>
+            <span className={`text-xs ${n === etapa ? 'text-indigo-600 font-medium' : 'text-gray-400'}
+              ${passosCompactos && n !== etapa ? 'sr-only sm:not-sr-only' : ''}`}>
               {n === 1 ? 'Profissional' : n === 2 ? 'Horário' : 'Confirmação'}
             </span>
             {n < 3 && <div className={`flex-1 h-px ${n < etapa ? 'bg-indigo-300' : 'bg-gray-200'}`}/>}
@@ -114,10 +132,11 @@ export default function AgendarPage() {
         <div className="bg-white border border-gray-200 rounded-xl p-5">
           <h2 className="text-sm font-medium text-gray-900 mb-4">Escolha a data e o horário</h2>
           <div className="mb-4">
-            <label className="block text-xs font-medium text-gray-500 mb-1">Data</label>
-            <input type="date" value={data} min={new Date().toISOString().split('T')[0]}
+            <label htmlFor="data-consulta" className="block text-xs font-medium text-gray-500 mb-1">Data</label>
+            <input id="data-consulta" type="date" value={data} min={hojeLocal()}
+              onClick={abrirCalendario}
               onChange={e => { setData(e.target.value); setHorario('') }}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"/>
+              className="w-full cursor-pointer border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"/>
           </div>
           {data && (
             <div className="mb-4">

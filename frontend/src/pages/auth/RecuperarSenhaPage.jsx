@@ -288,7 +288,8 @@ export default function RecuperarSenhaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    // py-16: deixa livre o canto de cima, onde ficam os botões de letra e de tema
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-16">
       <div className="bg-white border border-gray-200 rounded-2xl p-8 w-full max-w-md">
         <Logo/>
 

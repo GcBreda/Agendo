@@ -182,6 +182,8 @@ Abra `http://localhost:5173` e entre com uma das contas fictícias criadas pelo 
 | Profissional | `ana.melo@agendo.app` | `senha123` |
 | Paciente | `fernanda@agendo.app` | `senha123` |
 
+Para apresentar sem instalar nada, há uma versão online com dados fictícios: veja [Demonstração online](docs/demo-online.md).
+
 ### Testes
 
 Os testes do banco usam o `agendo_test` e recusam rodar em qualquer banco cujo nome não termine em `_test`. Crie o arquivo `backend/.env.test` com uma única linha:

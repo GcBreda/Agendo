@@ -30,12 +30,14 @@ function SectionCard({ title, children }) {
 
 function Row({ label, sub, children }) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-      <div>
+    // flex-wrap + texto com base de 9rem: com a letra maior, o botão desce para baixo do texto
+    // em vez de empurrar a linha para fora da tela. No tamanho padrão, nada muda.
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 border-b border-gray-100 last:border-0">
+      <div className="min-w-0 flex-[1_1_9rem]">
         <p className="text-sm font-medium text-gray-800">{label}</p>
         {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
       </div>
-      <div className="ml-4 flex-shrink-0">{children}</div>
+      <div className="flex-shrink-0">{children}</div>
     </div>
   )
 }
@@ -89,7 +91,8 @@ function PainelPerfil({ usuario }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        {/* Celular: um campo embaixo do outro. A partir de 640 px, duas colunas. */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 sm:gap-3">
           <Field label="Nome completo" name="nome" value={form.nome} onChange={handleChange}/>
           <Field label="E-mail" name="email" type="email" value={form.email} onChange={handleChange}/>
           <Field label="Telefone" name="telefone" value={form.telefone} onChange={handleChange} placeholder="(11) 99999-0000"/>
@@ -264,14 +267,16 @@ export default function ConfiguracoesPage() {
 
   return (
     <DashboardLayout titulo="Configurações">
-      <div className="flex gap-5">
+      {/* Celular (abaixo de 768 px): as seções viram uma fileira de abas no topo, que rola para o lado,
+          e o conteúdo usa a largura toda. A partir de md, menu lateral como antes. */}
+      <div className="flex flex-col md:flex-row gap-4 md:gap-5">
 
         {/* Menu lateral */}
-        <div className="w-48 flex-shrink-0">
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="md:w-48 flex-shrink-0">
+          <div className="bg-white border border-gray-200 rounded-xl flex overflow-x-auto md:block md:overflow-hidden">
             {MENU.map(m => (
               <button key={m.id} onClick={() => setAba(m.id)}
-                className={`w-full flex items-center gap-2.5 px-4 py-3 text-left text-sm border-l-2 transition-colors
+                className={`flex-shrink-0 whitespace-nowrap md:w-full flex items-center gap-2 md:gap-2.5 px-4 py-3 md:text-left text-sm border-b-2 md:border-b-0 md:border-l-2 transition-colors
                   ${aba === m.id
                     ? 'border-indigo-600 bg-indigo-50 text-indigo-700 font-medium'
                     : 'border-transparent text-gray-600 hover:bg-gray-50'
@@ -284,7 +289,7 @@ export default function ConfiguracoesPage() {
         </div>
 
         {/* Conteúdo */}
-        <div className="flex-1 min-w-0">
+        <div className="md:flex-1 min-w-0">
           {paineis[aba]}
         </div>
 

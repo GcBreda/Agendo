@@ -152,7 +152,7 @@ export default function ConsultasPage() {
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-medium text-gray-900">Histórico</h2>
-              <p className="text-xs text-gray-400 mt-0.5">{passadas.length} sessão{passadas.length !== 1 ? 'ões' : ''}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{passadas.length} {passadas.length === 1 ? 'sessão' : 'sessões'}</p>
             </div>
             <Link to="/paciente/historico" className="text-xs text-indigo-600 hover:underline">
               Ver tudo →

@@ -178,7 +178,7 @@ export default function HistoricoPage() {
           <div key={grupo.label} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
             <div className="px-5 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
               <span className="text-xs font-medium text-gray-600">{grupo.label}</span>
-              <span className="text-xs text-gray-400">{grupo.sessoes.length} sessão{grupo.sessoes.length !== 1 ? 'ões' : ''}</span>
+              <span className="text-xs text-gray-400">{grupo.sessoes.length} {grupo.sessoes.length === 1 ? 'sessão' : 'sessões'}</span>
             </div>
 
             <div className="divide-y divide-gray-100">

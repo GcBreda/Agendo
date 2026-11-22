@@ -121,7 +121,9 @@ export default function CadastroPage() {
   const progresso = etapa === 1 ? 33 : etapa === 2 ? 66 : 100
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-8">
+    // py-16: deixa livre o canto de cima, onde ficam os botões de letra e de tema
+    // (com a letra maior, o cartão fica mais alto e encostaria neles)
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-16">
       <div className="bg-white border border-gray-200 rounded-2xl p-8 w-full max-w-md">
 
         {/* Logo */}
@@ -161,7 +163,9 @@ export default function CadastroPage() {
         {etapa === 1 && (
           <div className="space-y-4">
             <p className="text-sm text-gray-600 text-center mb-4">Você é...</p>
-            <div className="grid grid-cols-2 gap-3">
+            {/* Duas colunas de no mínimo 7,5rem. Como rem cresce com a letra, com a letra maior
+                os dois cartões ficam um embaixo do outro, em vez de o texto sair do cartão. */}
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,7.5rem),1fr))] gap-3">
               {[
                 { value: 'PACIENTE',      label: 'Paciente',      sub: 'Quero agendar consultas', icon: '👤' },
                 { value: 'PROFISSIONAL',  label: 'Profissional',  sub: 'Psicólogo ou psiquiatra',  icon: '📋' },

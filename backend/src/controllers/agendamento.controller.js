@@ -1,6 +1,7 @@
 // backend/src/controllers/agendamento.controller.js
 const { prisma }  = require('../prisma/client')
 const { agendarNotificacoes } = require('../jobs/notificacao.job')
+const { instanteBrasilia, diaDaSemana, limitesDoDia, horaBrasilia } = require('../utils/fuso')
 
 // ── GET /api/agendamentos/disponiveis ────────────────────────
 // Query: profissionalId, data (YYYY-MM-DD)
@@ -10,6 +11,9 @@ async function horariosDisponiveis(req, res, next) {
     if (!profissionalId || !data) {
       return res.status(400).json({ error: 'profissionalId e data são obrigatórios.' })
     }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+      return res.status(400).json({ error: 'data deve estar no formato AAAA-MM-DD.' })
+    }
 
     const profissional = await prisma.profissional.findUnique({
       where: { id: profissionalId },
@@ -17,8 +21,7 @@ async function horariosDisponiveis(req, res, next) {
     })
     if (!profissional) return res.status(404).json({ error: 'Profissional não encontrado.' })
 
-    const dataObj   = new Date(data)
-    const diaSemana = ['DOMINGO','SEGUNDA','TERCA','QUARTA','QUINTA','SEXTA','SABADO'][dataObj.getDay()]
+    const diaSemana = ['DOMINGO','SEGUNDA','TERCA','QUARTA','QUINTA','SEXTA','SABADO'][diaDaSemana(data)]
 
     const disponibilidade = profissional.disponibilidades.find(
       d => d.diaSemana === diaSemana && d.ativo
@@ -30,17 +33,14 @@ async function horariosDisponiveis(req, res, next) {
     const ocupados  = await prisma.agendamento.findMany({
       where: {
         profissionalId,
-        dataHora: {
-          gte: new Date(`${data}T00:00:00`),
-          lte: new Date(`${data}T23:59:59`)
-        },
+        dataHora: limitesDoDia(data),
         status: { in: ['PENDENTE', 'CONFIRMADO'] }
       },
       select: { dataHora: true }
     })
 
     const horariosOcupados = new Set(
-      ocupados.map(a => a.dataHora.toISOString().slice(11, 16))
+      ocupados.map(a => horaBrasilia(a.dataHora))
     )
 
     const horarios = slots.map(slot => ({
@@ -66,7 +66,12 @@ async function criar(req, res, next) {
     })
     if (!paciente) return res.status(403).json({ error: 'Apenas pacientes podem agendar.' })
 
-    if (new Date(dataHora) <= new Date()) {
+    // O site manda o horário escolhido em Brasília, sem fuso
+    const instante = instanteBrasilia(dataHora)
+    if (Number.isNaN(instante.getTime())) {
+      return res.status(400).json({ error: 'Data e horário inválidos.' })
+    }
+    if (instante <= new Date()) {
       return res.status(400).json({ error: 'Não é possível agendar em data ou horário passado.' })
     }
 
@@ -74,7 +79,7 @@ async function criar(req, res, next) {
     const conflito = await prisma.agendamento.findFirst({
       where: {
         profissionalId,
-        dataHora: new Date(dataHora),
+        dataHora: instante,
         status: { in: ['PENDENTE', 'CONFIRMADO'] }
       }
     })
@@ -85,7 +90,7 @@ async function criar(req, res, next) {
         pacienteId:    paciente.id,
         profissionalId,
         pagamentoId:   pagamentoId || null,
-        dataHora:      new Date(dataHora),
+        dataHora:      instante,
         tipoSessao:    tipoSessao.toUpperCase(),
         observacoes,
         status:        pagamentoId ? 'CONFIRMADO' : 'PENDENTE'

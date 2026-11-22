@@ -101,7 +101,10 @@ export default function FinanceiroPage() {
       </div>
 
       {/* Métricas */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Cartões que acompanham o tamanho da letra (o mínimo de cada coluna é em rem, que cresce com a letra).
+          Até 1024 px: no máximo 2 colunas, e 1 quando um cartão teria menos de 8,5rem.
+          A partir de 1024 px: quantas colunas de 9,5rem couberem (4 no tamanho padrão). */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(max(min(100%,8.5rem),calc((100%_-_0.75rem)/2_-_1px)),1fr))] lg:grid-cols-[repeat(auto-fit,minmax(min(100%,9.5rem),1fr))] gap-3">
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <p className="text-xs text-gray-400 mb-1">Receita do mês</p>
           <p className="text-lg sm:text-xl font-semibold text-gray-900">{formatarMoeda(receitaMes)}</p>
@@ -193,7 +196,7 @@ export default function FinanceiroPage() {
           <h2 className="text-sm font-medium text-gray-900">
             Sessões de {MESES[mesSelecionado]}
           </h2>
-          <span className="text-xs text-gray-400">{doMes.length} sessão{doMes.length !== 1 ? 'ões' : ''}</span>
+          <span className="text-xs text-gray-400">{doMes.length} {doMes.length === 1 ? 'sessão' : 'sessões'}</span>
         </div>
 
         {isLoading ? (

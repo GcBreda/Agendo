@@ -3,9 +3,13 @@
   import DocumentosCfpPage from './pages/profissional/DocumentosCfpPage'
   import DsmPage from './pages/profissional/DsmPage'
   import CodigoEticaPage from './pages/profissional/CodigoEticaPage'
-  import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+  import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
   import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
   import { AuthProvider, useAuth } from './context/AuthContext'
+  import { TemaProvider } from './context/TemaContext'
+  import { TamanhoLetraProvider } from './context/TamanhoLetraContext'
+  import TemaSwitch from './components/TemaSwitch'
+  import TamanhoLetraControle from './components/TamanhoLetraControle'
 
   import LandingPage        from './pages/LandingPage'
   import LoginPage          from './pages/auth/LoginPage'
@@ -46,11 +50,29 @@ function RotaPublica({ children }) {
   return children
 }
 
+// Telas sem cabeçalho próprio (entrar, cadastro, recuperar senha, página não encontrada):
+// o tamanho da letra e o tema ficam no canto de cima. As outras têm os botões no próprio topo.
+function AjustesNasTelasDeEntrada() {
+  const { pathname } = useLocation()
+  const temTopoProprio = pathname === '/' || pathname.startsWith('/paciente') ||
+    pathname.startsWith('/profissional') || pathname.startsWith('/configuracoes')
+  if (temTopoProprio) return null
+  return (
+    <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+      <TamanhoLetraControle />
+      <TemaSwitch />
+    </div>
+  )
+}
+
 export default function App() {
   return (
+    <TemaProvider>
+    <TamanhoLetraProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrowserRouter>
+          <AjustesNasTelasDeEntrada />
           <Routes>
 
             <Route path="/" element={<LandingPage />} />
@@ -80,5 +102,7 @@ export default function App() {
         </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>
+    </TamanhoLetraProvider>
+    </TemaProvider>
   )
 }   
