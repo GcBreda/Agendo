@@ -41,7 +41,7 @@ function ModalSessao({ agendamento, onClose }) {
             </div>
             <div className="flex justify-between gap-3 text-xs">
               <span className="text-gray-500">Horário</span>
-              <span className="font-medium text-gray-900 text-right">{formatarHora(agendamento.dataHora)} · 50 min</span>
+              <span className="font-medium text-gray-900 text-right">{formatarHora(agendamento.dataHora)} · {agendamento.duracaoMin} min</span>
             </div>
             <div className="flex justify-between gap-3 text-xs">
               <span className="text-gray-500">Tipo de sessão</span>

@@ -117,7 +117,7 @@ export default function ProfissionalDashboard() {
                       <p className="text-sm font-medium text-gray-900 truncate">
                         {ag.paciente?.usuario?.nome}
                       </p>
-                      <p className="text-xs text-gray-400">{TIPO_LABEL[ag.tipoSessao]} · 50 min</p>
+                      <p className="text-xs text-gray-400">{TIPO_LABEL[ag.tipoSessao]} · {ag.duracaoMin} min</p>
                     </div>
                     <span className={`ml-auto text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${status.cls}`}>
                       {status.label}

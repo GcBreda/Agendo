@@ -163,7 +163,7 @@ export default function AgendaPage() {
                     <div className={`w-1 h-10 rounded-full flex-shrink-0 ${status.bar}`}/>
                     <div className="flex-1 min-w-[10rem]">
                       <p className="text-sm font-medium text-gray-900 truncate">{ag.paciente?.usuario?.nome}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{TIPO_LABEL[ag.tipoSessao]} · 50 min</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{TIPO_LABEL[ag.tipoSessao]} · {ag.duracaoMin} min</p>
                     </div>
                     <span className={`ml-auto text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${status.cls}`}>
                       {status.label}
@@ -266,7 +266,7 @@ export default function AgendaPage() {
                             {ag.paciente?.usuario?.nome}
                           </p>
                           <p className="text-xs text-gray-400 mt-0.5">
-                            {TIPO_LABEL[ag.tipoSessao]} · 50 min
+                            {TIPO_LABEL[ag.tipoSessao]} · {ag.duracaoMin} min
                           </p>
                         </div>
                         <div className="ml-auto flex items-center gap-2 flex-shrink-0">

@@ -180,7 +180,7 @@ export default function AgendarPage() {
           <div className="bg-gray-50 rounded-lg p-4 mb-5 space-y-2">
             <div className="flex justify-between gap-3 text-xs"><span className="text-gray-500">Profissional</span><span className="font-medium text-right">{profissional?.usuario?.nome}</span></div>
             <div className="flex justify-between gap-3 text-xs"><span className="text-gray-500">Data</span><span className="font-medium text-right">{new Date(data+'T00:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})}</span></div>
-            <div className="flex justify-between gap-3 text-xs"><span className="text-gray-500">Horário</span><span className="font-medium text-right">{horario} · 50 min</span></div>
+            <div className="flex justify-between gap-3 text-xs"><span className="text-gray-500">Horário</span><span className="font-medium text-right">{horario} · {profissional?.duracaoPadrao} min</span></div>
             <div className="flex justify-between gap-3 text-xs"><span className="text-gray-500">Sessão</span><span className="font-medium text-right">{TIPOS_SESSAO.find(t=>t.value===tipoSessao)?.label}</span></div>
             <div className="flex justify-between text-xs pt-2 border-t border-gray-200">
               <span className="text-gray-500 font-medium">Total</span>

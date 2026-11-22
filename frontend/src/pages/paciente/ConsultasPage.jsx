@@ -117,7 +117,7 @@ export default function ConsultasPage() {
                       {ag.profissional?.usuario?.nome}
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      {TIPO_LABEL[ag.tipoSessao]} · {formatarHora(ag.dataHora)} · 50 min
+                      {TIPO_LABEL[ag.tipoSessao]} · {formatarHora(ag.dataHora)} · {ag.duracaoMin} min
                     </p>
                     <p className="text-xs text-gray-400 capitalize mt-0.5">
                       {formatarData(ag.dataHora)}
