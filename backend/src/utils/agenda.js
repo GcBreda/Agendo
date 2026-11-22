@@ -13,6 +13,8 @@ const NOME_DO_DIA = {
   QUINTA: 'Quinta', SEXTA: 'Sexta', SABADO: 'Sábado'
 }
 const HORA_VALIDA = /^([01]\d|2[0-3]):[0-5]\d$/
+// O typeof importa: a expressão regular converte o que recebe em texto, e a lista ["08:00"] passaria
+const horaValida = hora => typeof hora === 'string' && HORA_VALIDA.test(hora)
 
 const LIMITES = {
   duracao:   { min: 10, max: 240 }, // minutos de cada consulta
@@ -33,6 +35,9 @@ function paraHora(minutos) {
 // Horários de início do dia. Em cada faixa, uma consulta atrás da outra, com o intervalo entre elas;
 // só entra a consulta que termina dentro da faixa. Ex.: 08:00–12:00, 50 min + 10 min → 08:00, 09:00, 10:00, 11:00.
 function gerarHorarios(faixas, duracaoMin, intervaloMin = 0) {
+  // Proteção: com duração 0 (ou um valor estranho gravado no banco) o laço abaixo nunca terminaria
+  // e travaria o servidor inteiro. Nesse caso o dia fica sem horários.
+  if (!(duracaoMin > 0) || !(intervaloMin >= 0)) return []
   const inicios = new Set()
   for (const faixa of faixas) {
     const fim = paraMinutos(faixa.horaFim)
@@ -77,20 +82,24 @@ function noPasso(valor, { min, max }) {
   return Number.isInteger(valor) && valor >= min && valor <= max && valor % LIMITES.passo === 0
 }
 
+const MENSAGEM_DURACAO = `A duração da consulta deve ser de ${LIMITES.duracao.min} a ${LIMITES.duracao.max} minutos, de 5 em 5.`
+const MENSAGEM_INTERVALO = `O intervalo entre consultas deve ser de ${LIMITES.intervalo.min} a ${LIMITES.intervalo.max} minutos, de 5 em 5.`
+const duracaoValida = valor => noPasso(valor, LIMITES.duracao)
+const intervaloValido = valor => noPasso(valor, LIMITES.intervalo)
+
 // Erros de uma configuração de "Meus horários", em mensagens para a pessoa ler. Lista vazia = pode salvar.
 function errosDaConfiguracao({ duracaoMin, intervaloMin, faixas }) {
   const erros = []
-  const duracaoOk = noPasso(duracaoMin, LIMITES.duracao)
-  if (!duracaoOk) {
-    erros.push(`A duração da consulta deve ser de ${LIMITES.duracao.min} a ${LIMITES.duracao.max} minutos, de 5 em 5.`)
-  }
-  if (!noPasso(intervaloMin, LIMITES.intervalo)) {
-    erros.push(`O intervalo entre consultas deve ser de ${LIMITES.intervalo.min} a ${LIMITES.intervalo.max} minutos, de 5 em 5.`)
-  }
-  if (!Array.isArray(faixas)) {
-    erros.push('Envie a lista de faixas de atendimento.')
-    return erros
-  }
+  if (!duracaoValida(duracaoMin)) erros.push(MENSAGEM_DURACAO)
+  if (!intervaloValido(intervaloMin)) erros.push(MENSAGEM_INTERVALO)
+  return erros.concat(errosDasFaixas(faixas, duracaoMin))
+}
+
+// Só as faixas: dia, formato, fim depois do início, tamanho de pelo menos uma consulta, sem sobreposição no dia.
+function errosDasFaixas(faixas, duracaoMin) {
+  const erros = []
+  const duracaoOk = duracaoValida(duracaoMin)
+  if (!Array.isArray(faixas)) return ['Envie a lista de faixas de atendimento.']
 
   const validasPorDia = {}
   for (const faixa of faixas) {
@@ -100,7 +109,7 @@ function errosDaConfiguracao({ duracaoMin, intervaloMin, faixas }) {
       continue
     }
     const dia = NOME_DO_DIA[diaSemana]
-    if (!HORA_VALIDA.test(horaInicio) || !HORA_VALIDA.test(horaFim)) {
+    if (!horaValida(horaInicio) || !horaValida(horaFim)) {
       erros.push(`${dia}: use horários no formato HH:MM.`)
       continue
     }
@@ -133,6 +142,7 @@ function errosDaConfiguracao({ duracaoMin, intervaloMin, faixas }) {
 }
 
 module.exports = {
-  DIAS_SEMANA, NOME_DO_DIA, HORA_VALIDA, LIMITES,
-  paraMinutos, paraHora, gerarHorarios, sobrepoe, horariosDoDia, conferirNovaConsulta, errosDaConfiguracao
+  DIAS_SEMANA, NOME_DO_DIA, HORA_VALIDA, LIMITES, MENSAGEM_DURACAO, MENSAGEM_INTERVALO,
+  paraMinutos, paraHora, gerarHorarios, sobrepoe, horariosDoDia, conferirNovaConsulta,
+  duracaoValida, intervaloValido, errosDaConfiguracao, errosDasFaixas
 }

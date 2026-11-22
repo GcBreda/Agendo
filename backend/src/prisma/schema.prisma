@@ -173,6 +173,7 @@ model Profissional {
   especialidade   Especialidade
   valorSessao     Decimal       @map("valor_sessao") @db.Decimal(10, 2)
   duracaoPadrao   Int           @default(50) @map("duracao_padrao_min")
+  intervaloMin    Int           @default(0) @map("intervalo_min") // minutos livres entre uma consulta e a próxima
   bio             String?
   ativo           Boolean       @default(true)
   criadoEm        DateTime      @default(now()) @map("criado_em")

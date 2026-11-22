@@ -40,6 +40,12 @@ describe('gerarHorarios', () => {
   test('sem faixas, sem horários', () => {
     assert.deepEqual(gerarHorarios([], 50), [])
   })
+
+  test('duração 0 ou intervalo negativo não travam: o dia fica sem horários', () => {
+    assert.deepEqual(gerarHorarios([manha], 0, 0), [])
+    assert.deepEqual(gerarHorarios([manha], 50, -50), [])
+    assert.deepEqual(gerarHorarios([manha], undefined), [])
+  })
 })
 
 describe('sobrepoe', () => {
@@ -124,6 +130,9 @@ describe('errosDaConfiguracao', () => {
   test('formato de hora, dia inválido, lista ausente e limite de faixas por dia', () => {
     assert.deepEqual(errosDaConfiguracao({ ...valida, faixas: [{ diaSemana: 'SEGUNDA', horaInicio: '8:00', horaFim: '12:00' }] }),
       ['Segunda: use horários no formato HH:MM.'])
+    assert.deepEqual(errosDaConfiguracao({ ...valida, faixas: [{ diaSemana: 'SEGUNDA', horaInicio: ['08:00'], horaFim: '12:00' }] }),
+      ['Segunda: use horários no formato HH:MM.']) // lista não é hora, mesmo com "08:00" dentro
+    assert.deepEqual(errosDaConfiguracao({ ...valida, faixas: [null] }), ['Dia da semana inválido.'])
     assert.deepEqual(errosDaConfiguracao({ ...valida, faixas: [{ diaSemana: 'FERIADO', horaInicio: '08:00', horaFim: '12:00' }] }),
       ['Dia da semana inválido.'])
     assert.deepEqual(errosDaConfiguracao({ ...valida, faixas: undefined }), ['Envie a lista de faixas de atendimento.'])

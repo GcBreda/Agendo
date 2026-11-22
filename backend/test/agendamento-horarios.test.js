@@ -8,16 +8,9 @@ process.env.JWT_SECRET ||= 'segredo-ficticio-so-para-teste'
 
 const { randomUUID } = require('node:crypto')
 const { criarBancoFalso } = require('./helpers/banco-falso')
-const { instanteBrasilia, dataBrasilia, diaDaSemana } = require('../src/utils/fuso')
+const { proximo } = require('./helpers/datas')
+const { instanteBrasilia } = require('../src/utils/fuso')
 
-// Próximo dia da semana pedido (0 = domingo), com pelo menos 2 dias de folga: a consulta tem de ser no futuro
-function proximo(diaAlvo) {
-  const meioDiaDeHoje = instanteBrasilia(`${dataBrasilia(new Date())}T12:00`)
-  for (let i = 2; i < 10; i++) {
-    const data = dataBrasilia(new Date(meioDiaDeHoje.getTime() + i * 864e5))
-    if (diaDaSemana(data) === diaAlvo) return data
-  }
-}
 const segunda = proximo(1)
 const domingo = proximo(0)
 
