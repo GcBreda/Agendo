@@ -2,6 +2,7 @@
 // Financeiro do profissional: resumo do mês ou do ano.
 // Os totais vêm do servidor (GET /api/financeiro/resumo), que soma o valor gravado em cada consulta
 // no calendário de Brasília. A lista de sessões do mês vem das consultas do próprio profissional.
+// "Baixar PDF" gera o arquivo no navegador (utils/pdfResumo.js), com os mesmos números da tela.
 import React, { useState } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import { useAgendamentos } from '../../hooks/useAgendamentos'
@@ -37,7 +38,27 @@ export default function FinanceiroPage() {
   const [ano, setAno] = useState(atual.ano)
   const [mes, setMes] = useState(atual.mes) // 1 a 12
   const { data: resumo, isLoading, isError, refetch } = useResumoFinanceiro(ano)
-  const { data: agendamentos = [] } = useAgendamentos()
+  const { data: agendamentos = [], isLoading: carregandoConsultas } = useAgendamentos()
+  const [pdf, setPdf] = useState('parado') // 'parado', 'gerando' ou 'erro'
+
+  // Sessões realizadas do mês escolhido, no calendário de Brasília: a lista da tela e a tabela do PDF
+  const chaveDoMes = `${ano}-${String(mes).padStart(2, '0')}`
+  const sessoesDoMes = agendamentos
+    .filter(ag => ag.status === 'REALIZADO' && mesDeBrasilia(ag.dataHora) === chaveDoMes)
+    .sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
+  const periodo = visao === 'ano' ? String(ano) : `${MESES[mes - 1].toLowerCase()} de ${ano}`
+
+  async function baixarPdf() {
+    setPdf('gerando')
+    try {
+      // Import dinâmico: o código do PDF (e a biblioteca jsPDF) só é baixado quando alguém clica
+      const { baixarResumoPdf } = await import('../../utils/pdfResumo')
+      await baixarResumoPdf({ resumo, visao, mes, sessoes: sessoesDoMes })
+      setPdf('parado')
+    } catch {
+      setPdf('erro') // por exemplo, sem internet para baixar a biblioteca do PDF
+    }
+  }
 
   // Anda um mês (ou um ano) para trás (-1) ou para frente (+1)
   function andar(passo) {
@@ -81,8 +102,16 @@ export default function FinanceiroPage() {
               ${ehOAtual ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
             {visao === 'ano' ? 'Ano atual' : 'Mês atual'}
           </button>
+          <button type="button" onClick={baixarPdf} disabled={!resumo || isError || carregandoConsultas || pdf === 'gerando'}
+            className="min-h-[40px] md:min-h-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 disabled:opacity-50">
+            <IconeBaixar className="w-3.5 h-3.5" />
+            {pdf === 'gerando' ? 'Gerando PDF...' : <>Baixar PDF<span className="sr-only"> do resumo de {periodo}</span></>}
+          </button>
         </div>
       </div>
+      {pdf === 'erro' && (
+        <p role="alert" className="text-xs text-red-600">Não foi possível gerar o PDF. Confira a conexão e tente de novo.</p>
+      )}
 
       {isLoading ? (
         <div className="bg-white border border-gray-200 rounded-xl px-5 py-10 text-center text-sm text-gray-400">
@@ -99,7 +128,7 @@ export default function FinanceiroPage() {
       ) : visao === 'ano' ? (
         <VisaoAno resumo={resumo} mesEmDestaque={ano === atual.ano ? atual.mes : null} />
       ) : (
-        <VisaoMes resumo={resumo} mes={mes} agendamentos={agendamentos} />
+        <VisaoMes resumo={resumo} mes={mes} sessoes={sessoesDoMes} />
       )}
 
     </DashboardLayout>
@@ -107,16 +136,12 @@ export default function FinanceiroPage() {
 }
 
 // ── Um mês: cartões e a lista das sessões realizadas ─────────
-function VisaoMes({ resumo, mes, agendamentos }) {
+function VisaoMes({ resumo, mes, sessoes }) {
   const doMes = resumo.meses[mes - 1]
   const anterior = mes === 1 ? resumo.dezembroAnterior : resumo.meses[mes - 2]
   const nomeDoMes = MESES[mes - 1].toLowerCase()
   const nomeDoAnterior = MESES[(mes + 10) % 12].toLowerCase()
   const doMesTodas = doMes.realizadas + doMes.canceladas
-  const chave = `${resumo.ano}-${String(mes).padStart(2, '0')}`
-  const sessoes = agendamentos
-    .filter(ag => ag.status === 'REALIZADO' && mesDeBrasilia(ag.dataHora) === chave)
-    .sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
 
   return (
     <>
@@ -273,6 +298,14 @@ function AvisoDoValor() {
       Os valores somam as sessões realizadas, pelo preço do dia em que cada uma foi marcada.
       Ainda não é o valor recebido: o sistema não registra pagamentos.
     </p>
+  )
+}
+
+function IconeBaixar({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M8 2.5v7.5M4.75 7l3.25 3.25L11.25 7M3 12.5h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   )
 }
 
