@@ -1,243 +1,287 @@
+// frontend/src/pages/profissional/FinanceiroPage.jsx
+// Financeiro do profissional: resumo do mês ou do ano.
+// Os totais vêm do servidor (GET /api/financeiro/resumo), que soma o valor gravado em cada consulta
+// no calendário de Brasília. A lista de sessões do mês vem das consultas do próprio profissional.
 import React, { useState } from 'react'
-import { useAgendamentos } from '../../hooks/useAgendamentos'
 import DashboardLayout from '../../components/layout/DashboardLayout'
+import { useAgendamentos } from '../../hooks/useAgendamentos'
+import { useResumoFinanceiro } from '../../hooks/useFinanceiro'
 
-const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
-const METODO_LABEL = {
-  CARTAO_CREDITO: 'Cartão de crédito',
-  CARTAO_DEBITO:  'Cartão de débito',
-  PIX:            'PIX',
-  CONVENIO:       'Convênio',
+const TIPO_LABEL = {
+  AVALIACAO_INICIAL: 'Avaliação inicial',
+  ACOMPANHAMENTO:    'Acompanhamento',
+  TCC:               'TCC',
+  PSICANALISE:       'Psicanálise',
 }
 
-function formatarData(iso) {
-  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
+const FUSO = 'America/Sao_Paulo'
+const formatarMoeda = valor => Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`
+const porcentagem = (parte, todo) => Math.round((parte / todo) * 100)
 
-function formatarMoeda(valor) {
-  return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+// 'AAAA-MM' de uma data no calendário de Brasília: o mesmo critério do servidor no resumo
+const mesDeBrasilia = data => new Intl.DateTimeFormat('en-CA', { timeZone: FUSO, year: 'numeric', month: '2-digit' }).format(new Date(data))
+const diaDeBrasilia = data => new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, day: 'numeric' }).format(new Date(data))
+const horaDeBrasilia = data => new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, hour: '2-digit', minute: '2-digit' }).format(new Date(data))
+
+function hojeEmBrasilia() {
+  const [ano, mes] = mesDeBrasilia(new Date()).split('-').map(Number)
+  return { ano, mes }
 }
 
 export default function FinanceiroPage() {
-  const { data: agendamentos = [], isLoading } = useAgendamentos()
-  const hoje = new Date()
-  const [mesSelecionado, setMesSelecionado] = useState(hoje.getMonth())
-  const [anoSelecionado, setAnoSelecionado] = useState(hoje.getFullYear())
+  const atual = hojeEmBrasilia()
+  const [visao, setVisao] = useState('mes') // 'mes' ou 'ano'
+  const [ano, setAno] = useState(atual.ano)
+  const [mes, setMes] = useState(atual.mes) // 1 a 12
+  const { data: resumo, isLoading, isError, refetch } = useResumoFinanceiro(ano)
+  const { data: agendamentos = [] } = useAgendamentos()
 
-  // Filtra agendamentos realizados do mês selecionado
-  const doMes = agendamentos.filter(ag => {
-    const d = new Date(ag.dataHora)
-    return ag.status === 'REALIZADO' &&
-           d.getMonth()    === mesSelecionado &&
-           d.getFullYear() === anoSelecionado
-  })
-
-  const mesAnterior = agendamentos.filter(ag => {
-    const d = new Date(ag.dataHora)
-    const mesAnt = mesSelecionado === 0 ? 11 : mesSelecionado - 1
-    const anoAnt = mesSelecionado === 0 ? anoSelecionado - 1 : anoSelecionado
-    return ag.status === 'REALIZADO' &&
-           d.getMonth()    === mesAnt &&
-           d.getFullYear() === anoAnt
-  })
-
-  const valorSessao   = 180 // valor fixo por enquanto
-  const receitaMes    = doMes.length * valorSessao
-  const receitaAnt    = mesAnterior.length * valorSessao
-  const variacao      = receitaAnt > 0 ? ((receitaMes - receitaAnt) / receitaAnt * 100).toFixed(0) : 0
-  const taxaConfirm   = agendamentos.length > 0
-    ? Math.round((agendamentos.filter(a => a.status !== 'CANCELADO').length / agendamentos.length) * 100)
-    : 0
-
-  // Navegação de mês
-  function mesAnteriorNav() {
-    if (mesSelecionado === 0) { setMesSelecionado(11); setAnoSelecionado(a => a - 1) }
-    else setMesSelecionado(m => m - 1)
+  // Anda um mês (ou um ano) para trás (-1) ou para frente (+1)
+  function andar(passo) {
+    if (visao === 'ano') return setAno(a => a + passo)
+    const indice = ano * 12 + (mes - 1) + passo
+    setAno(Math.floor(indice / 12))
+    setMes((indice % 12) + 1)
   }
-  function mesProximoNav() {
-    if (mesSelecionado === 11) { setMesSelecionado(0); setAnoSelecionado(a => a + 1) }
-    else setMesSelecionado(m => m + 1)
-  }
-
-  // Gráfico de barras — últimos 6 meses
-  const ultimos6 = Array.from({ length: 6 }, (_, i) => {
-    let m = mesSelecionado - 5 + i
-    let a = anoSelecionado
-    while (m < 0) { m += 12; a-- }
-    const sessoes = agendamentos.filter(ag => {
-      const d = new Date(ag.dataHora)
-      return ag.status === 'REALIZADO' && d.getMonth() === m && d.getFullYear() === a
-    }).length
-    return { mes: MESES[m].slice(0,3), sessoes, receita: sessoes * valorSessao, atual: m === mesSelecionado && a === anoSelecionado }
-  })
-  const maxSessoes = Math.max(...ultimos6.map(m => m.sessoes), 1)
+  const ehOAtual = visao === 'ano' ? ano === atual.ano : ano === atual.ano && mes === atual.mes
 
   return (
     <DashboardLayout titulo="Financeiro">
 
-      {/* Navegação de mês */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-medium text-gray-900">
-          {MESES[mesSelecionado]} {anoSelecionado}
-        </h2>
-        <div className="flex items-center gap-2">
-          <button onClick={mesAnteriorNav}
-            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-500">
+      {/* Mês ou ano, e qual período */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div role="group" aria-label="Ver o resumo por" className="inline-flex p-1 bg-gray-100 rounded-lg">
+          {[['mes', 'Mês'], ['ano', 'Ano']].map(([valor, rotulo]) => (
+            <button key={valor} type="button" aria-pressed={visao === valor} onClick={() => setVisao(valor)}
+              className={`min-h-[40px] md:min-h-0 px-4 py-1.5 text-xs font-medium rounded-md transition-colors
+                ${visao === valor ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              {rotulo}
+            </button>
+          ))}
+        </div>
+
+        {/* flex-wrap: no celular com letra grande, "Mês atual" desce para a linha de baixo */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => andar(-1)} aria-label={visao === 'ano' ? 'Ano anterior' : 'Mês anterior'}
+            className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-500">
             ‹
           </button>
-          <button onClick={() => { setMesSelecionado(hoje.getMonth()); setAnoSelecionado(hoje.getFullYear()) }}
-            className={`px-3 py-1.5 text-xs rounded-lg border transition-colors
-              ${mesSelecionado === hoje.getMonth() && anoSelecionado === hoje.getFullYear()
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
-            Mês atual
-          </button>
-          <button onClick={mesProximoNav}
-            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-500">
+          <h2 aria-live="polite" className="min-w-[7.5rem] sm:min-w-[9.5rem] text-center text-sm font-medium text-gray-900">
+            {visao === 'ano' ? ano : `${MESES[mes - 1]} de ${ano}`}
+          </h2>
+          <button type="button" onClick={() => andar(1)} aria-label={visao === 'ano' ? 'Próximo ano' : 'Próximo mês'}
+            className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-500">
             ›
           </button>
+          <button type="button" onClick={() => { setAno(atual.ano); setMes(atual.mes) }}
+            className={`min-h-[40px] md:min-h-0 px-3 py-1.5 text-xs rounded-lg border transition-colors
+              ${ehOAtual ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+            {visao === 'ano' ? 'Ano atual' : 'Mês atual'}
+          </button>
         </div>
       </div>
 
-      {/* Métricas */}
-      {/* Cartões que acompanham o tamanho da letra (o mínimo de cada coluna é em rem, que cresce com a letra).
-          Até 1024 px: no máximo 2 colunas, e 1 quando um cartão teria menos de 8,5rem.
-          A partir de 1024 px: quantas colunas de 9,5rem couberem (4 no tamanho padrão). */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(max(min(100%,8.5rem),calc((100%_-_0.75rem)/2_-_1px)),1fr))] lg:grid-cols-[repeat(auto-fit,minmax(min(100%,9.5rem),1fr))] gap-3">
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs text-gray-400 mb-1">Receita do mês</p>
-          <p className="text-lg sm:text-xl font-semibold text-gray-900">{formatarMoeda(receitaMes)}</p>
-          <p className={`text-xs mt-1 ${Number(variacao) >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-            {Number(variacao) >= 0 ? '↑' : '↓'} {Math.abs(variacao)}% vs mês anterior
-          </p>
+      {isLoading ? (
+        <div className="bg-white border border-gray-200 rounded-xl px-5 py-10 text-center text-sm text-gray-400">
+          Carregando o resumo...
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs text-gray-400 mb-1">Sessões realizadas</p>
-          <p className="text-xl font-semibold text-gray-900">{isLoading ? '...' : doMes.length}</p>
-          <p className="text-xs text-gray-400 mt-1">neste mês</p>
+      ) : isError ? (
+        <div className="bg-white border border-gray-200 rounded-xl px-5 py-10 text-center">
+          <p className="text-sm text-gray-600">Não foi possível carregar o resumo.</p>
+          <button type="button" onClick={() => refetch()}
+            className="mt-3 text-xs text-indigo-600 border border-indigo-200 px-3 py-2 rounded-lg hover:bg-indigo-50">
+            Tentar de novo
+          </button>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs text-gray-400 mb-1">Valor por sessão</p>
-          <p className="text-xl font-semibold text-gray-900">{formatarMoeda(valorSessao)}</p>
-          <p className="text-xs text-gray-400 mt-1">valor padrão</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs text-gray-400 mb-1">Taxa de confirmação</p>
-          <p className="text-xl font-semibold text-gray-900">{taxaConfirm}%</p>
-          <p className={`text-xs mt-1 ${taxaConfirm >= 85 ? 'text-green-600' : 'text-amber-600'}`}>
-            {taxaConfirm >= 85 ? '✓ Meta atingida' : 'Meta: 85%'}
-          </p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-        {/* Gráfico de barras */}
-        <div className="md:col-span-2 bg-white border border-gray-200 rounded-xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-medium text-gray-900">Sessões — últimos 6 meses</h2>
-          </div>
-          <div className="flex items-end gap-3 h-32">
-            {ultimos6.map((m, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-xs text-gray-400">{m.sessoes}</span>
-                <div className="w-full flex items-end" style={{ height: '80px' }}>
-                  <div
-                    className={`w-full rounded-t-md transition-all ${m.atual ? 'bg-indigo-600' : 'bg-indigo-100'}`}
-                    style={{ height: `${(m.sessoes / maxSessoes) * 80}px`, minHeight: m.sessoes > 0 ? '4px' : '0' }}
-                  />
-                </div>
-                <span className="text-xs text-gray-400">{m.mes}</span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between text-xs text-gray-400">
-            <span>Total 6 meses: {ultimos6.reduce((a, m) => a + m.sessoes, 0)} sessões</span>
-            <span>{formatarMoeda(ultimos6.reduce((a, m) => a + m.receita, 0))}</span>
-          </div>
-        </div>
-
-        {/* Resumo do mês */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <h2 className="text-sm font-medium text-gray-900 mb-4">Resumo do mês</h2>
-          <div className="space-y-3">
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-500">Sessões realizadas</span>
-              <span className="font-medium text-gray-900">{doMes.length}</span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-500">Sessões canceladas</span>
-              <span className="font-medium text-gray-900">
-                {agendamentos.filter(ag => {
-                  const d = new Date(ag.dataHora)
-                  return ag.status === 'CANCELADO' &&
-                         d.getMonth() === mesSelecionado &&
-                         d.getFullYear() === anoSelecionado
-                }).length}
-              </span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-500">Valor por sessão</span>
-              <span className="font-medium text-gray-900">{formatarMoeda(valorSessao)}</span>
-            </div>
-            <div className="h-px bg-gray-100"/>
-            <div className="flex justify-between text-sm">
-              <span className="font-medium text-gray-700">Total</span>
-              <span className="font-semibold text-indigo-600">{formatarMoeda(receitaMes)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Histórico de sessões do mês */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-sm font-medium text-gray-900">
-            Sessões de {MESES[mesSelecionado]}
-          </h2>
-          <span className="text-xs text-gray-400">{doMes.length} {doMes.length === 1 ? 'sessão' : 'sessões'}</span>
-        </div>
-
-        {isLoading ? (
-          <div className="px-5 py-8 text-center text-sm text-gray-400">Carregando...</div>
-        ) : doMes.length === 0 ? (
-          <div className="px-5 py-10 text-center">
-            <p className="text-sm text-gray-400">Nenhuma sessão realizada neste mês</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {doMes
-              .sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
-              .map(ag => (
-                <div key={ag.id} className="px-5 py-3.5 flex flex-wrap md:flex-nowrap items-center gap-x-4 gap-y-2">
-                  <div className="w-12 flex-shrink-0 text-center">
-                    <p className="text-sm font-medium text-gray-900">{new Date(ag.dataHora).getDate()}</p>
-                    <p className="text-xs text-gray-400">{MESES[new Date(ag.dataHora).getMonth()].slice(0,3)}</p>
-                  </div>
-                  <div className="w-1 h-10 rounded-full bg-green-400 flex-shrink-0"/>
-                  <div className="flex-1 min-w-[10rem] md:min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {ag.paciente?.usuario?.nome}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {ag.tipoSessao?.replace(/_/g, ' ')} · {new Date(ag.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                  <div className="ml-auto flex items-center gap-3 flex-shrink-0">
-                    <span className="text-sm font-medium text-green-600">
-                      {formatarMoeda(valorSessao)}
-                    </span>
-                    <span className="text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-medium">
-                      Realizada
-                    </span>
-                  </div>
-                </div>
-              ))}
-          </div>
-        )}
-      </div>
+      ) : visao === 'ano' ? (
+        <VisaoAno resumo={resumo} mesEmDestaque={ano === atual.ano ? atual.mes : null} />
+      ) : (
+        <VisaoMes resumo={resumo} mes={mes} agendamentos={agendamentos} />
+      )}
 
     </DashboardLayout>
   )
+}
+
+// ── Um mês: cartões e a lista das sessões realizadas ─────────
+function VisaoMes({ resumo, mes, agendamentos }) {
+  const doMes = resumo.meses[mes - 1]
+  const anterior = mes === 1 ? resumo.dezembroAnterior : resumo.meses[mes - 2]
+  const nomeDoMes = MESES[mes - 1].toLowerCase()
+  const nomeDoAnterior = MESES[(mes + 10) % 12].toLowerCase()
+  const doMesTodas = doMes.realizadas + doMes.canceladas
+  const chave = `${resumo.ano}-${String(mes).padStart(2, '0')}`
+  const sessoes = agendamentos
+    .filter(ag => ag.status === 'REALIZADO' && mesDeBrasilia(ag.dataHora) === chave)
+    .sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
+
+  return (
+    <>
+      <Cartoes>
+        <Cartao rotulo="Valor das sessões realizadas" valor={formatarMoeda(doMes.valor)}
+          {...comparacao(doMes.valor, anterior.valor, nomeDoAnterior)} />
+        <Cartao rotulo="Sessões realizadas" valor={doMes.realizadas} detalhe={`em ${nomeDoMes}`} />
+        <Cartao rotulo="Sessões canceladas" valor={doMes.canceladas}
+          detalhe={doMesTodas ? `${porcentagem(doMes.canceladas, doMesTodas)}% das sessões do mês` : 'nenhuma sessão no mês'} />
+        <Cartao rotulo="Valor atual da consulta" valor={formatarMoeda(resumo.profissional.valorSessao)} detalhe="o do seu cadastro" />
+      </Cartoes>
+      <AvisoDoValor />
+
+      <section aria-labelledby="titulo-sessoes" className="bg-white border border-gray-200 rounded-xl">
+        <div className="px-4 sm:px-5 py-4 border-b border-gray-100 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h2 id="titulo-sessoes" className="text-sm font-medium text-gray-900">Sessões realizadas em {nomeDoMes}</h2>
+          <span className="text-xs text-gray-400">{plural(sessoes.length, 'sessão', 'sessões')}</span>
+        </div>
+        {sessoes.length === 0 ? (
+          <p className="px-5 py-10 text-center text-sm text-gray-400">Nenhuma sessão realizada neste mês.</p>
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {sessoes.map(ag => (
+              <li key={ag.id} className="px-4 sm:px-5 py-3.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                <div className="w-10 flex-shrink-0 text-center">
+                  <p className="text-sm font-medium text-gray-900 tabular-nums">{diaDeBrasilia(ag.dataHora)}</p>
+                  <p className="text-xs text-gray-400">{MESES[mes - 1].slice(0, 3)}</p>
+                </div>
+                <div className="flex-1 min-w-[9rem]">
+                  <p className="text-sm font-medium text-gray-900 truncate">{ag.paciente?.usuario?.nome}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {TIPO_LABEL[ag.tipoSessao] ?? ag.tipoSessao} · {horaDeBrasilia(ag.dataHora)}
+                  </p>
+                </div>
+                <p className="ml-auto text-sm font-medium text-gray-900 tabular-nums">{formatarMoeda(ag.valor)}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </>
+  )
+}
+
+// ── Um ano: cartões, gráfico e a tabela mês a mês ────────────
+function VisaoAno({ resumo, mesEmDestaque }) {
+  const { ano, meses, total } = resumo
+  const todas = total.realizadas + total.canceladas
+  const maior = Math.max(1, ...meses.map(m => m.realizadas))
+
+  return (
+    <>
+      <Cartoes>
+        <Cartao rotulo={`Valor das sessões em ${ano}`} valor={formatarMoeda(total.valor)} />
+        <Cartao rotulo="Sessões realizadas" valor={total.realizadas} detalhe={`em ${ano}`} />
+        <Cartao rotulo="Sessões canceladas" valor={total.canceladas}
+          detalhe={todas ? `${porcentagem(total.canceladas, todas)}% das sessões do ano` : 'nenhuma sessão no ano'} />
+      </Cartoes>
+      <AvisoDoValor />
+
+      <section aria-labelledby="titulo-grafico" className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5">
+        <h2 id="titulo-grafico" className="text-sm font-medium text-gray-900">Sessões realizadas por mês</h2>
+        {/* Para leitor de tela, o gráfico é uma imagem com descrição; os números estão na tabela */}
+        <div role="img" aria-label={`Gráfico de barras das sessões realizadas por mês em ${ano}. Os números estão na tabela Mês a mês.`}
+          className="mt-4 flex items-end gap-1 sm:gap-2">
+          {meses.map(m => (
+            <div key={m.mes} className="flex-1 min-w-0 flex flex-col items-center gap-1">
+              <span className="text-[0.6875rem] text-gray-400 tabular-nums h-4">{m.realizadas || ''}</span>
+              <div className="w-full h-20 flex items-end">
+                <div className={`w-full rounded-t-md ${m.mes === mesEmDestaque ? 'bg-indigo-600' : 'bg-indigo-100'}`}
+                  style={{ height: `${(m.realizadas / maior) * 100}%`, minHeight: m.realizadas ? '3px' : 0 }} />
+              </div>
+              <span className="text-[0.6875rem] text-gray-400">
+                <span className="sm:hidden">{MESES[m.mes - 1][0]}</span>
+                <span className="hidden sm:inline">{MESES[m.mes - 1].slice(0, 3)}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="titulo-tabela" className="bg-white border border-gray-200 rounded-xl">
+        <h2 id="titulo-tabela" className="px-4 sm:px-5 py-4 border-b border-gray-100 text-sm font-medium text-gray-900">Mês a mês</h2>
+        {/* No celular a tabela precisa caber inteira, com o Valor à vista: mês com 3 letras e sem a coluna
+            Canceladas (o total de canceladas está no cartão). A rolagem para o lado fica só de reserva. */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <caption className="sr-only">Sessões e valor por mês em {ano}</caption>
+            <thead>
+              <tr className="text-xs text-gray-500">
+                <th scope="col" className="text-left font-medium pl-4 pr-2 sm:px-5 py-2.5">Mês</th>
+                <th scope="col" className="text-right font-medium px-2 sm:px-3 py-2.5">
+                  <span className="sm:hidden" aria-hidden="true">Sessões</span>
+                  <span className="max-sm:sr-only">Realizadas</span>
+                </th>
+                <th scope="col" className="hidden sm:table-cell text-right font-medium px-3 py-2.5">Canceladas</th>
+                <th scope="col" className="text-right font-medium pl-2 pr-4 sm:px-5 py-2.5">Valor</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 border-t border-gray-100">
+              {meses.map(m => (
+                <tr key={m.mes} className={m.realizadas || m.canceladas ? 'text-gray-900' : 'text-gray-400'}>
+                  <th scope="row" className="text-left font-normal pl-4 pr-2 sm:px-5 py-2.5">
+                    <span className="sm:hidden" aria-hidden="true">{MESES[m.mes - 1].slice(0, 3)}</span>
+                    <span className="max-sm:sr-only">{MESES[m.mes - 1]}</span>
+                  </th>
+                  <td className="text-right tabular-nums px-2 sm:px-3 py-2.5">{m.realizadas}</td>
+                  <td className="hidden sm:table-cell text-right tabular-nums px-3 py-2.5">{m.canceladas}</td>
+                  <td className="text-right tabular-nums pl-2 pr-4 sm:px-5 py-2.5 whitespace-nowrap">{formatarMoeda(m.valor)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t border-gray-200 text-gray-900 font-medium">
+                <th scope="row" className="text-left pl-4 pr-2 sm:px-5 py-3">Total</th>
+                <td className="text-right tabular-nums px-2 sm:px-3 py-3">{total.realizadas}</td>
+                <td className="hidden sm:table-cell text-right tabular-nums px-3 py-3">{total.canceladas}</td>
+                <td className="text-right tabular-nums pl-2 pr-4 sm:px-5 py-3 whitespace-nowrap">{formatarMoeda(total.valor)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+    </>
+  )
+}
+
+// ── Peças ────────────────────────────────────────────────────
+
+// Mesmos cartões de antes: até 1024 px, no máximo 2 colunas (1 quando o cartão ficaria estreito demais);
+// depois, quantas colunas de 9,5rem couberem. Em rem, para acompanhar o tamanho da letra.
+function Cartoes({ children }) {
+  return (
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(max(min(100%,8.5rem),calc((100%_-_0.75rem)/2_-_1px)),1fr))] lg:grid-cols-[repeat(auto-fit,minmax(min(100%,9.5rem),1fr))] gap-3">
+      {children}
+    </div>
+  )
+}
+
+function Cartao({ rotulo, valor, detalhe, tom = 'text-gray-400' }) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-4">
+      <p className="text-xs text-gray-400 mb-1">{rotulo}</p>
+      <p className="text-lg sm:text-xl font-semibold text-gray-900 tabular-nums">{valor}</p>
+      {detalhe && <p className={`text-xs mt-1 ${tom}`}>{detalhe}</p>}
+    </div>
+  )
+}
+
+// O valor é o das sessões, não o dinheiro que entrou: o sistema ainda não registra pagamentos
+function AvisoDoValor() {
+  return (
+    <p className="text-xs text-gray-500 max-w-3xl">
+      Os valores somam as sessões realizadas, pelo preço do dia em que cada uma foi marcada.
+      Ainda não é o valor recebido: o sistema não registra pagamentos.
+    </p>
+  )
+}
+
+// Comparação com o mês anterior, em porcentagem
+function comparacao(atual, anterior, nomeDoAnterior) {
+  if (anterior === 0) return { detalhe: `sem sessões em ${nomeDoAnterior} para comparar` }
+  const variacao = porcentagem(atual - anterior, anterior)
+  if (variacao === 0) return { detalhe: `igual a ${nomeDoAnterior}` }
+  return variacao > 0
+    ? { detalhe: `↑ ${variacao}% em relação a ${nomeDoAnterior}`, tom: 'text-green-600' }
+    : { detalhe: `↓ ${Math.abs(variacao)}% em relação a ${nomeDoAnterior}`, tom: 'text-red-600' }
 }

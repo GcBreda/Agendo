@@ -103,3 +103,8 @@ export const profissionalService = {
   meusHorarios:       ()      => api.get('/profissionais/me/horarios'),
   salvarMeusHorarios: (dados) => api.put('/profissionais/me/horarios', dados)
 }
+
+export const financeiroService = {
+  // Totais de cada mês do ano, do profissional logado (sem dado de paciente)
+  resumo: (ano) => api.get('/financeiro/resumo', { params: { ano } })
+}

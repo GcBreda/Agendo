@@ -49,6 +49,7 @@ export function useCancelarAgendamento() {
     mutationFn: (id) => agendamentoService.cancelar(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['agendamentos'] })
+      queryClient.invalidateQueries({ queryKey: ['resumo-financeiro'] }) // cancelada entra no resumo
     }
   })
 }
@@ -61,6 +62,7 @@ export function useRealizarAgendamento() {
     mutationFn: (id) => agendamentoService.realizar(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['agendamentos'] })
+      queryClient.invalidateQueries({ queryKey: ['resumo-financeiro'] }) // realizada soma no resumo
     }
   })
 }

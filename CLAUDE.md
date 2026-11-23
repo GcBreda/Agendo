@@ -68,7 +68,7 @@ Se uma tarefa pedida conflitar com qualquer regra abaixo, **pare, avise e propon
 - **Feito:** feed de notícias removido (commit `38649fc`), `.env` fora do Git.
 - **Fora do código, a cargo do grupo:** revogar a chave do GNews que está no histórico; trocar os segredos de JWT e Redis usados em produção.
 - Configurações ("salvo!" sem salvar), recuperação de senha, 2FA, lembretes, e-mail e pagamento ainda são simulados: não tratar como funcionando.
-- Valor de sessão hardcoded (R$180): deve vir do banco.
+- Valor da sessão: vem do cadastro do profissional e fica gravado em cada consulta (o Financeiro soma esse valor). Pagamentos ainda não são registrados, então o Financeiro mostra o valor das sessões, não o recebido.
 - Testes automatizados só no backend (`npm test`, também no CI a cada PR); o frontend ainda não tem.
 
 ## Como trabalhar comigo (estilo de colaboração)
