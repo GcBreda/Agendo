@@ -17,9 +17,14 @@ function escolher(obj, select) {
   return saida
 }
 
+// Filtro de igualdade simples, como o Prisma faz: campo com valor undefined é IGNORADO (não filtra nada).
+// É de propósito: assim o teste reproduz a falha de "paciente?.id" (ver CLAUDE.md).
+const combina = (registro, where = {}) =>
+  Object.entries(where).every(([campo, valor]) => valor === undefined || registro[campo] === valor)
+
 function criarBancoFalso(inicial = {}) {
   const db = {
-    usuarios: [], pacientes: [], profissionais: [], disponibilidades: [], agendamentos: [],
+    usuarios: [], pacientes: [], profissionais: [], disponibilidades: [], agendamentos: [], pagamentos: [],
     ...structuredClone(inicial)
   }
 
@@ -81,6 +86,14 @@ function criarBancoFalso(inicial = {}) {
         const novo = { id: randomUUID(), duracaoMin: 50, ...data }
         db.agendamentos.push(novo)
         return { ...novo }
+      }
+    },
+
+    pagamento: {
+      findMany: async ({ where, orderBy } = {}) => {
+        const lista = db.pagamentos.filter(p => combina(p, where)).map(p => ({ ...p }))
+        if (orderBy?.criadoEm) lista.sort((a, b) => (orderBy.criadoEm === 'desc' ? b.criadoEm - a.criadoEm : a.criadoEm - b.criadoEm))
+        return lista
       }
     },
 
