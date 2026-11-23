@@ -60,6 +60,8 @@ Se uma tarefa pedida conflitar com qualquer regra abaixo, **pare, avise e propon
 - Prisma sempre com parâmetros; nada de SQL montado com string.
 - Senha com bcrypt. OTP de recuperação validado no backend, com expiração e limite de tentativas.
 - Rotas sensíveis com autenticação, autorização por perfil e checagem de vínculo profissional↔paciente.
+- **Filtro do Prisma (`where`) nunca recebe valor que pode ser `undefined`**, como `paciente?.id`. Com `undefined`, o Prisma ignora o filtro e a consulta pega **todas** as linhas (num `deleteMany`, apaga todas). Primeiro buscar o registro de quem está logado, responder 403/404 se ele não existir, e só então filtrar. O teste `backend/test/padroes-seguros.test.js` barra `?.` dentro de `where` e roda no `npm test` e no CI.
+- Valor que vem do cliente (`req.body`, `req.query`) só entra em filtro do Prisma depois de validado como texto ou número (express-validator). Um objeto como `{ "contains": "" }` viraria um filtro que pega todas as linhas.
 - Mensagens de erro ao cliente genéricas; detalhes só no log do servidor.
 
 ## Pendências conhecidas
@@ -67,7 +69,7 @@ Se uma tarefa pedida conflitar com qualquer regra abaixo, **pare, avise e propon
 - **Fora do código, a cargo do grupo:** revogar a chave do GNews que está no histórico; trocar os segredos de JWT e Redis usados em produção.
 - Configurações ("salvo!" sem salvar), recuperação de senha, 2FA, lembretes, e-mail e pagamento ainda são simulados: não tratar como funcionando.
 - Valor de sessão hardcoded (R$180): deve vir do banco.
-- Sem testes automatizados ainda.
+- Testes automatizados só no backend (`npm test`, também no CI a cada PR); o frontend ainda não tem.
 
 ## Como trabalhar comigo (estilo de colaboração)
 Quem usa este projeto é **estudante de 2º semestre de ADS** e quer **aprender**, não só receber código.
@@ -82,7 +84,7 @@ Quem usa este projeto é **estudante de 2º semestre de ADS** e quer **aprender*
 
 ## Definição de "pronto"
 1. O código roda, os **testes passam** e há teste novo cobrindo a mudança.
-2. Rotas de prontuário têm teste de autorização: profissional A não acessa paciente do profissional B, e paciente sem consentimento não é lido.
+2. Rotas de prontuário têm teste de autorização: profissional A não acessa paciente do profissional B, e paciente sem consentimento não é lido. Toda rota que devolve dados de paciente ou de dinheiro (consultas, pagamentos, financeiro) também tem: perfil errado recebe 403, e ninguém vê dados de outra pessoa.
 3. Nenhum segredo ou dado real foi para o Git ou para os logs.
 4. As mudanças foram explicadas e o commit é pequeno, com mensagem clara.
 5. Mudanças em autenticação ou prontuário foram revisadas por outro integrante (sugestão: o QA).
