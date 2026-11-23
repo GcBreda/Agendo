@@ -78,7 +78,7 @@ async function main() {
       if (dataHora < agora) status = n % 13 === 0 ? 'CANCELADO' : 'REALIZADO'
       else status = n % 3 === 0 ? 'PENDENTE' : 'CONFIRMADO'
       dados.push({
-        pacienteId: paciente.id, profissionalId: prof.id, dataHora, duracaoMin: 50, status,
+        pacienteId: paciente.id, profissionalId: prof.id, dataHora, duracaoMin: 50, valor: prof.valorSessao, status,
         tipoSessao: quem === 4 && semana === 0 ? 'AVALIACAO_INICIAL' : tipo
       })
     }

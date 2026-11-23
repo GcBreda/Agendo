@@ -210,6 +210,7 @@ model Agendamento {
   pagamentoId     String?           @unique @map("pagamento_id")
   dataHora        DateTime          @map("data_hora")
   duracaoMin      Int               @default(50) @map("duracao_min")
+  valor           Decimal           @db.Decimal(10, 2) // preço da consulta no dia em que foi marcada
   status          StatusAgendamento @default(PENDENTE)
   tipoSessao      TipoSessao        @map("tipo_sessao")
   observacoes     String?

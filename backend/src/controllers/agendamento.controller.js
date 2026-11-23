@@ -104,6 +104,7 @@ async function criar(req, res, next) {
         pagamentoId:   pagamentoId || null,
         dataHora:      instante,
         duracaoMin:    profissional.duracaoPadrao,
+        valor:         profissional.valorSessao, // fica gravado: mudar o preço depois não muda esta consulta
         tipoSessao:    tipoSessao.toUpperCase(),
         observacoes,
         status:        pagamentoId ? 'CONFIRMADO' : 'PENDENTE'

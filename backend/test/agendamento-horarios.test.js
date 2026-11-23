@@ -21,7 +21,7 @@ const banco = criarBancoFalso({
     { id: 'u-pro', perfil: 'PROFISSIONAL', nome: 'Profissional Teste', email: 'profissional@agenda.test' }
   ],
   pacientes: [{ id: 'pac-1', usuarioId: 'u-pac' }],
-  profissionais: [{ id: profissionalId, usuarioId: 'u-pro', duracaoPadrao: 50, intervaloMin: 10, ativo: true }],
+  profissionais: [{ id: profissionalId, usuarioId: 'u-pro', duracaoPadrao: 50, intervaloMin: 10, valorSessao: 180, ativo: true }],
   disponibilidades: [
     { id: 'd1', profissionalId, diaSemana: 'SEGUNDA', horaInicio: '08:00', horaFim: '12:00', ativo: true },
     { id: 'd2', profissionalId, diaSemana: 'SEGUNDA', horaInicio: '14:00', horaFim: '18:00', ativo: true }
@@ -76,11 +76,12 @@ describe('agenda do profissional nos horários livres e no agendamento', () => {
     assert.deepEqual(await livres(domingo), [])
   })
 
-  test('agenda num horário livre da grade e grava a duração do profissional', async () => {
+  test('agenda num horário livre da grade e grava a duração e o valor do profissional', async () => {
     const res = await agendar('10:00:00')
     assert.equal(res.status, 201)
     const { agendamento } = await res.json()
     assert.equal(agendamento.duracaoMin, 50)
+    assert.equal(Number(agendamento.valor), 180) // o Prisma devolve Decimal, que vira texto no JSON
     assert.equal((await livres(segunda)).find(h => h.hora === '10:00').disponivel, false)
   })
 
@@ -111,5 +112,15 @@ describe('agenda do profissional nos horários livres e no agendamento', () => {
     assert.deepEqual(await livres(segunda), [])
     assert.equal((await agendar('11:00:00')).status, 404)
     banco._dados.profissionais[0].ativo = true
+  })
+
+  test('o valor fica na consulta: mudar o preço depois não muda o que já foi marcado', async () => {
+    banco._dados.profissionais[0].valorSessao = 200
+    const res = await agendar('11:00:00')
+    assert.equal(res.status, 201)
+    assert.equal(Number((await res.json()).agendamento.valor), 200)
+    const dasDez = banco._dados.agendamentos.find(a => a.dataHora.getTime() === instanteBrasilia(`${segunda}T10:00`).getTime())
+    assert.equal(Number(dasDez.valor), 180)
+    banco._dados.profissionais[0].valorSessao = 180
   })
 })

@@ -89,6 +89,7 @@ async function criarCenario(tx) {
       pacienteId: paciente.id,
       profissionalId: profissional.id,
       dataHora: new Date('2026-01-15T13:00:00Z'),
+      valor: '180.00',
       tipoSessao: 'ACOMPANHAMENTO',
       status: 'REALIZADO'
     }
