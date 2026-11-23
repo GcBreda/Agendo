@@ -186,7 +186,10 @@ export default function DashboardLayout({ children, titulo }) {
             </button>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-4 lg:p-5 flex flex-col gap-4">
+        {/* [&>*]:shrink-0: nenhum filho direto encolhe. O <main> é uma coluna flex de altura fixa, e um cartão
+            com overflow-hidden podia ser espremido para caber nela, escondendo o próprio conteúdo
+            (a tabela do Financeiro chegava a 0 px no celular). Agora a página fica mais alta e o <main> rola. */}
+        <main className="flex-1 overflow-y-auto p-4 lg:p-5 flex flex-col gap-4 [&>*]:shrink-0">
           {children}
         </main>
       </div>
