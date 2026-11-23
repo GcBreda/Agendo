@@ -14,6 +14,7 @@ const prontuarioRoutes   = require('./routes/prontuario.routes')
 const pagamentoRoutes    = require('./routes/pagamento.routes')
 const profissionalRoutes = require('./routes/profissional.routes')
 const pacienteRoutes     = require('./routes/paciente.routes')
+const financeiroRoutes   = require('./routes/financeiro.routes')
 const { errorHandler }   = require('./middleware/error.middleware')
 
 const app = express()
@@ -71,6 +72,7 @@ app.use('/api/prontuarios',  prontuarioRoutes)
 app.use('/api/pagamentos',   pagamentoRoutes)
 app.use('/api/profissionais',profissionalRoutes)
 app.use('/api/pacientes',    pacienteRoutes)
+app.use('/api/financeiro',   financeiroRoutes)
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
 

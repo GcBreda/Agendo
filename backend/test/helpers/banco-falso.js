@@ -22,6 +22,11 @@ function escolher(obj, select) {
 const combina = (registro, where = {}) =>
   Object.entries(where).every(([campo, valor]) => valor === undefined || registro[campo] === valor)
 
+// Filtro de data do Prisma: { gte, gt, lte, lt }, qualquer combinação
+const noIntervalo = (data, f) => !f ||
+  ((f.gte === undefined || data >= f.gte) && (f.gt === undefined || data > f.gt) &&
+   (f.lte === undefined || data <= f.lte) && (f.lt === undefined || data < f.lt))
+
 function criarBancoFalso(inicial = {}) {
   const db = {
     usuarios: [], pacientes: [], profissionais: [], disponibilidades: [], agendamentos: [], pagamentos: [],
@@ -51,6 +56,7 @@ function criarBancoFalso(inicial = {}) {
         if (!p) return null
         if (include?.disponibilidades) return { ...p, disponibilidades: disponibilidadesDe(p.id).map(d => ({ ...d })) }
         const saida = escolher(p, select)
+        if (select?.usuario) saida.usuario = escolher(db.usuarios.find(u => u.id === p.usuarioId), select.usuario.select)
         if (select?.disponibilidades) {
           const pedido = select.disponibilidades
           saida.disponibilidades = disponibilidadesDe(p.id, pedido.where).map(d => escolher(d, pedido.select))
@@ -79,7 +85,7 @@ function criarBancoFalso(inicial = {}) {
     agendamento: {
       findMany: async ({ where, select }) => db.agendamentos
         .filter(a => a.profissionalId === where.profissionalId)
-        .filter(a => !where.dataHora || (a.dataHora >= where.dataHora.gte && a.dataHora <= where.dataHora.lte))
+        .filter(a => noIntervalo(a.dataHora, where.dataHora))
         .filter(a => !where.status?.in || where.status.in.includes(a.status))
         .map(a => escolher(a, select)),
       create: async ({ data }) => {
